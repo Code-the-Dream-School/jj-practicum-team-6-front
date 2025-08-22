@@ -1,0 +1,129 @@
+/* root styling guide based on style guide provided*/
+
+/* Design System Variables */
+:root {
+  /* Colors from style guide */
+  --color-primary: #E66240;      /* Orange */
+  --color-success: #7FD96C;      /* Green */
+  --color-secondary: #1E1E1E;    /* Black */
+  --color-text: #6F7273;         /* Grey */
+  --color-background: #F3F3F3;   /* Light Grey */
+  --color-white: #FFFFFF;
+  
+  /* Border Radius - 14px as per style guide */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  
+  /* Container Widths */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1200px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  
+  /* Transitions */
+  --transition: all 0.2s ease-in-out;
+}
+
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  color: var(--color-secondary);
+  background-color: var(--color-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Classes - Following style guide */
+.text-h1 {
+  font-family: 'Merriweather', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.text-h2 {
+  font-family: 'Roboto', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.text-h3 {
+  font-family: 'Roboto', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.text-body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Remove default styles */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Focus styles for accessibility */
+*:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Responsive Typography (can be adjusted if wanted) */
+@media (max-width: 768px) {
+  .text-h1 {
+    font-size: 36px;
+  }
+  
+  .text-h2 {
+    font-size: 32px;
+  }
+}
