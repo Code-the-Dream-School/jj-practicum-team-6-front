@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAllData } from './util/index';
+import Header from './components/layout/Header';
 //import HomePage from './pages/HomePage';
 import './App.css';
 
@@ -51,12 +52,15 @@ function App() {
 
 return (
     <div className="App">
-      {/* Typography Test */}
-      <section style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
-        <h1 className="text-h1">Lost something?</h1>
-        <h2 className="text-h2">Welcome to App Name</h2>
-        <h3 className="text-h3">Recently Added</h3>
-        <p className="text-body">This is body text using Roboto font family.</p>
+      <Header />
+
+      {/* Typography Test for testing the sticky(freeze) heder*/}
+      <main style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
+        <section style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)'}}>
+          <h1 className="text-h1">Lost something?</h1>
+          <h2 className="text-h2">Welcome to RetrieveApp</h2>
+          <h3 className="text-h3">Recently Added</h3>
+          <p className="text-body">This is body text using Roboto font family.</p>
         
         {message && (
           <div style={{ 
@@ -69,6 +73,20 @@ return (
           </div>
         )}
       </section>
+
+         {/* temporary test content to test sticky header scrolling */}
+        <section style={{ height: '200vh', padding: 'var(--space-xl)', backgroundColor: 'var(--color-background)' }}>
+          <h3 className="text-h3">Scroll down to test sticky header</h3>
+          <p className="text-body">The header should stay at the top and be clearly visible over this content.</p>
+          <div style={{ marginTop: '50vh' }}>
+            <p className="text-body">More content here... Keep scrolling to test the header visibility.</p>
+          </div>
+          <div style={{ marginTop: '50vh' }}>
+            <p className="text-body">Even more content. The header should remain clearly visible.</p>
+          </div>
+        </section>
+
+    </main>  
     </div>
   );
 
