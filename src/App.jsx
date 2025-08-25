@@ -1,101 +1,193 @@
-import React, { useState, useEffect } from 'react';
-import { getAllData } from './util/index';
-import Header from './components/layout/Header';
-//import HomePage from './pages/HomePage';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import { getAllData } from "./util/index";
+import Header from "./components/layout/Header";
+import HeroSection from "./components/layout/HeroSection";
+import "./App.css";
 
-const URL = 'http://localhost:8000/api/v1/';
+const URL = "http://localhost:8000/api/v1/";
 
 function App() {
-  
-  const [message, setMessage] = useState(''); 
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  //const [error, setError] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-
     (async () => {
-      try{
+      try {
         setLoading(true);
-        const myData = await getAllData(URL)
+        const myData = await getAllData(URL);
         setMessage(myData.data);
-        //setError(null);
-      }
-      catch (err) {
-        console.error('API Error:', err);
-        setError('Backend not connected');
-        setMessage('API is not available - using mock data');
-      }
-      finally{
+        setError(null);
+      } catch (err) {
+        console.error("API Error:", err);
+        setError("Backend not connected");
+        setMessage("API not available - using mock data");
+      } finally {
         setLoading(false);
       }
     })();
-      
-    return () => {
-      console.log('unmounting');
-    }
 
+    return () => {
+      console.log("unmounting");
+    };
   }, []);
 
-  if (loading){
-    return(
-     <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-      }}>
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
         <p className="text-body">Loading...</p>
       </div>
     );
   }
 
-return (
+  return (
     <div className="App">
       <Header />
 
-      {/* Typography Test for testing the sticky(freeze) heder*/}
-      <main style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
-        <section style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)'}}>
-          <h1 className="text-h1">Lost something?</h1>
-          <h2 className="text-h2">Welcome to RetrieveApp</h2>
-          <h3 className="text-h3">Recently Added</h3>
-          <p className="text-body">This is body text using Roboto font family.</p>
-        
-        {message && (
-          <div style={{ 
-            backgroundColor: '#e8f5e8', 
-            padding: 'var(--space-md)', 
-            marginTop: 'var(--space-lg)',
-            borderRadius: 'var(--radius-md)'
-          }}>
-            <p className="text-body">Backend: {message}</p>
-          </div>
-        )}
-      </section>
+      {/* Backend Status Debug */}
+      {message && (
+        <div
+          style={{
+            backgroundColor: error ? "#fef2f2" : "#e8f5e8",
+            padding: "var(--space-sm)",
+            textAlign: "center",
+            borderBottom: "1px solid var(--color-background)",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontSize: "14px",
+              color: error ? "#dc2626" : "var(--color-success)",
+              fontFamily: "Roboto, sans-serif",
+            }}
+          >
+            Backend Status: {message}
+          </p>
+        </div>
+      )}
 
-         {/* temporary test content to test sticky header scrolling */}
-        <section style={{ height: '200vh', padding: 'var(--space-xl)', backgroundColor: 'var(--color-background)' }}>
-          <h3 className="text-h3">Scroll down to test sticky header</h3>
-          <p className="text-body">The header should stay at the top and be clearly visible over this content.</p>
-          <div style={{ marginTop: '50vh' }}>
-            <p className="text-body">More content here... Keep scrolling to test the header visibility.</p>
-          </div>
-          <div style={{ marginTop: '50vh' }}>
-            <p className="text-body">Even more content. The header should remain clearly visible.</p>
+      {/* Need feedback on which code to go with. option 1. or option 2? */}
+
+      {/* option 1: */}
+      {/* <main>
+        <HeroSection /> */}
+
+        {/* /* Temporary welcome section */ }
+        {/* <section
+          style={{
+            padding: "var(--space-2xl)",
+            backgroundColor: "var(--color-white)",
+            textAlign: "center",
+          }}
+        >
+          <h2 className="text-h2">Welcome to RetrieveApp</h2>
+          <p
+            className="text-body"
+            style={{
+              marginTop: "var(--space-md)",
+              maxWidth: "600px",
+              margin: "0 auto",
+            }}
+          >
+            Next we'll add: Action buttons, Recent items grid, Stats section,
+            and more components.
+          </p>
+        </section> */}
+
+        {/* /* Test sticky header content */ }
+        {/* <section
+          style={{
+            height: "100vh",
+            padding: "var(--space-xl)",
+            backgroundColor: "var(--color-background)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <h3 className="text-h3">Scroll test section</h3>
+            <p className="text-body">
+              Scroll back up to see the hero section and test the sticky header.
+            </p>
           </div>
         </section>
+      </main> */}
 
-    </main>  
+      {/* option 2: */}
+      <main>
+        <HeroSection />
+
+        {/* About Us Section */}
+        <section
+          id="about"
+          style={{
+            padding: "var(--space-2xl)",
+            backgroundColor: "var(--color-white)",
+            textAlign: "center",
+          }}
+        >
+          <h2 className="text-h2">About Us</h2>
+          <p
+            className="text-body"
+            style={{
+              marginTop: "var(--space-md)",
+              maxWidth: "600px",
+              margin: "0 auto",
+            }}
+          >
+            Welcome to RetrieveApp.
+          </p>
+        </section>
+
+        {/* Our Values Section */}
+        <section
+          id="values"
+          style={{
+            height: "100vh",
+            backgroundColor: "var(--color-background)",
+          }}
+        >
+          <h2 className="text-h2">Our Values</h2>
+        </section>
+
+        {/* How it works Section */}
+        <section
+          id="how-it-works"
+          style={{ height: "100vh", backgroundColor: "var(--color-white)" }}
+        >
+          <h2 className="text-h2">How It Works?</h2>
+        </section>
+
+        {/* Our Team Section */}
+        <section
+          id="team"
+          style={{
+            height: "100vh",
+            backgroundColor: "var(--color-background)",
+          }}
+        >
+          <h2 className="text-h2">Our Team</h2>
+        </section>
+
+        {/* Contacts Section */}
+        <section
+          id="contacts"
+          style={{ height: "100vh", backgroundColor: "var(--color-white)" }}
+        >
+          <h2 className="text-h2">Contact Us</h2>
+        </section>
+      </main>
     </div>
   );
-
-  // return (
-  //   <>
-  //     <h1>{message}</h1>
-  //   </>
-  // );
-
 }
 
-export default App
+export default App;

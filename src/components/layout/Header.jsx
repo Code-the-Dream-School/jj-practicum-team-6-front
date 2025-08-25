@@ -34,7 +34,18 @@ const Header = () => {
                 className={`${styles.navLink} ${
                   activeNav === item.label ? styles.active : ""
                 }`}
-                onClick={() => setActiveNav(item.label)}
+                //onClick={() => setActiveNav(item.label)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveNav(item.label);
+                  const element = document.querySelector(item.href);
+                  if (element) {
+                    element.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }
+                }}
               >
                 {item.label}
               </a>
