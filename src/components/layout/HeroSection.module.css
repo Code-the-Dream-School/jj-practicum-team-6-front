@@ -1,5 +1,5 @@
 .heroSection {
-  background: linear-gradient(135deg, #FFF7E6 0%, #E6F7FF 100%);
+  background: linear-gradient(135deg, #fff7e6 0%, #e6f7ff 100%);
   padding: var(--space-2xl) 0;
   min-height: 80vh;
   display: flex;
@@ -24,7 +24,7 @@
 }
 
 .heroTitle {
-  font-family: 'Merriweather', serif;
+  font-family: "Merriweather", serif;
   font-size: 56px;
   font-weight: 700;
   line-height: 1.1;
@@ -33,7 +33,7 @@
 }
 
 .heroSubtitle {
-  font-family: 'Merriweather', serif;
+  font-family: "Merriweather", serif;
   font-size: 56px;
   font-weight: 700;
   line-height: 1.1;
@@ -47,7 +47,7 @@
 }
 
 .heroDescription {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-size: 18px;
   font-weight: 400;
   color: var(--color-text);
@@ -63,7 +63,9 @@
   animation: bounce 2s infinite;
 }
 
-/*   can include if get approval from the frontend team for this feature @keyframes bounce {
+/*  can include if get approval from the frontend team for this feature 
+
+@keyframes bounce {
   0%, 20%, 50%, 80%, 100% {
     transform: translateY(0);
   }
@@ -81,16 +83,16 @@
     min-height: 60vh;
     padding: var(--space-xl) 0;
   }
-  
+
   .heroContainer {
     padding: 0 var(--space-md);
   }
-  
+
   .heroTitle,
   .heroSubtitle {
     font-size: 36px;
   }
-  
+
   .heroDescription {
     font-size: 16px;
   }

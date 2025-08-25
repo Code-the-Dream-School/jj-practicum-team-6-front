@@ -51,13 +51,13 @@
   padding: var(--space-xs);
   width: fit-content;
   margin: 0 auto;
-} 
+}
 
 .navLink {
   font-family: "Roboto", sans-serif;
   font-size: 16px;
   font-weight: 500;
-  color: var(--color-text);   /* muted grey text */
+  color: var(--color-text); /* muted grey text */
   text-decoration: none;
   transition: var(--transition);
   padding: var(--space-sm) var(--space-lg);
@@ -70,13 +70,13 @@
 
 .navLink:hover {
   color: var(--color-secondary);
-    background-color: rgba(255, 255, 255, 0.2); /* Light hover */
+  background-color: rgba(255, 255, 255, 0.2); /* Light hover */
 }
 
 .navLink.active {
-  background-color: var(--color-white);   /* White pill */
-  color: var(--color-secondary);          /* Dark text */
-  box-shadow: var(--shadow-sm);           /* Optional subtle lift */
+  background-color: var(--color-white); /* White pill */
+  color: var(--color-secondary); /* Dark text */
+  box-shadow: var(--shadow-sm); /* Optional subtle lift */
   z-index: 2;
 }
 
@@ -102,11 +102,11 @@
     gap: var(--space-lg);
     padding: 0 var(--space-lg);
   }
-  
+
   .navigation {
     gap: var(--space-md);
   }
-  
+
   .navLink {
     padding: var(--space-sm) var(--space-md);
     font-size: 15px;
@@ -119,11 +119,11 @@
     justify-content: space-between;
     padding: 0 var(--space-md);
   }
-  
+
   .navigationSection {
     display: none;
   }
-  
+
   .logo {
     font-size: 24px;
   }

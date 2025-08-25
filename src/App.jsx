@@ -3,6 +3,7 @@ import { getAllData } from "./util/index";
 import Header from "./components/layout/Header";
 import HeroSection from "./components/layout/HeroSection";
 import "./App.css";
+import Footer from "./components/layout/Footer";
 
 const URL = "http://localhost:8000/api/v1/";
 
@@ -80,8 +81,8 @@ function App() {
       {/* <main>
         <HeroSection /> */}
 
-        {/* /* Temporary welcome section */ }
-        {/* <section
+      {/* /* Temporary welcome section */}
+      {/* <section
           style={{
             padding: "var(--space-2xl)",
             backgroundColor: "var(--color-white)",
@@ -102,8 +103,8 @@ function App() {
           </p>
         </section> */}
 
-        {/* /* Test sticky header content */ }
-        {/* <section
+      {/* /* Test sticky header content */}
+      {/* <section
           style={{
             height: "100vh",
             padding: "var(--space-xl)",
@@ -126,66 +127,77 @@ function App() {
       <main>
         <HeroSection />
 
-        {/* About Us Section */}
         <section
           id="about"
           style={{
             padding: "var(--space-2xl)",
             backgroundColor: "var(--color-white)",
             textAlign: "center",
+            minHeight: "50vh",
           }}
         >
-          <h2 className="text-h2">About Us</h2>
-          <p
-            className="text-body"
-            style={{
-              marginTop: "var(--space-md)",
-              maxWidth: "600px",
-              margin: "0 auto",
-            }}
-          >
-            Welcome to RetrieveApp.
+          <h2 className="text-h2">About Us Section</h2>
+          <p className="text-body">
+            This will be the about us content. Click "About us" in the nav to
+            test smooth scrolling.
           </p>
         </section>
 
-        {/* Our Values Section */}
         <section
           id="values"
           style={{
-            height: "100vh",
+            padding: "var(--space-2xl)",
             backgroundColor: "var(--color-background)",
+            textAlign: "center",
+            minHeight: "50vh",
           }}
         >
-          <h2 className="text-h2">Our Values</h2>
+          <h2 className="text-h2">Our Values Section</h2>
+          <p className="text-body">
+            Values content will go here. Test navigation scrolling.
+          </p>
         </section>
 
-        {/* How it works Section */}
         <section
           id="how-it-works"
-          style={{ height: "100vh", backgroundColor: "var(--color-white)" }}
+          style={{
+            padding: "var(--space-2xl)",
+            backgroundColor: "var(--color-white)",
+            textAlign: "center",
+            minHeight: "50vh",
+          }}
         >
-          <h2 className="text-h2">How It Works?</h2>
+          <h2 className="text-h2">How It Works Section</h2>
+          <p className="text-body">How it works content will go here.</p>
         </section>
 
-        {/* Our Team Section */}
         <section
           id="team"
           style={{
-            height: "100vh",
+            padding: "var(--space-2xl)",
             backgroundColor: "var(--color-background)",
+            textAlign: "center",
+            minHeight: "50vh",
           }}
         >
-          <h2 className="text-h2">Our Team</h2>
+          <h2 className="text-h2">Our Team Section</h2>
+          <p className="text-body">Team content will go here.</p>
         </section>
 
-        {/* Contacts Section */}
         <section
           id="contacts"
-          style={{ height: "100vh", backgroundColor: "var(--color-white)" }}
+          style={{
+            padding: "var(--space-2xl)",
+            backgroundColor: "var(--color-white)",
+            textAlign: "center",
+            minHeight: "50vh",
+          }}
         >
-          <h2 className="text-h2">Contact Us</h2>
+          <h2 className="text-h2">Contacts Section</h2>
+          <p className="text-body">Contact information will go here.</p>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }
