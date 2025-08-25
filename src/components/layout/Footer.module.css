@@ -1,0 +1,108 @@
+.footer {
+  background-color: var(--color-background);
+  padding: var(--space-2xl) 0 var(--space-lg) 0;
+  margin-top: auto;
+}
+
+.container {
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  text-align: center;
+}
+
+.logo {
+  font-family: 'Merriweather', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.logo:hover {
+  color: var(--color-primary);
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.contactText {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.contactDetails {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.emailLink {
+  background-color: var(--color-secondary);
+  color: var(--color-white);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.emailLink:hover {
+  background-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.emailLink:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.copyright {
+  border-top: 1px solid #d1d5db;
+  padding-top: var(--space-lg);
+  width: 100%;
+}
+
+.copyright p {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-md);
+  }
+  
+  .contactDetails {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  
+  .footer {
+    padding: var(--space-xl) 0 var(--space-lg) 0;
+  }
+}
