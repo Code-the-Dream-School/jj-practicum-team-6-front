@@ -44,8 +44,8 @@ function EditProfile(){
                     {errors.name &&<p>{errors.name}</p>}
                 </div>
                 <div>
-                    <label>Email</label>
-                    <input name='email' value={form.email} onChange={handleChange}
+                    <label htmlFor="email">Email</label>
+                    <input id="email" type="email" name="email" value={form.email} onChange={handleChange} autoComplete="email"
                     className='w-full bg-[#F3F3F3] px-4 py-2 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#7FD96C]'/> 
                     {errors.email &&<p>{errors.email}</p>}
                 </div>
