@@ -50,8 +50,8 @@ function EditProfile(){
                     {errors.email &&<p>{errors.email}</p>}
                 </div>
                 <div>
-                    <label>Phone</label>
-                    <input name='phone' value={form.phone} onChange={handleChange}
+                    <label htmlFor="phone">Phone</label>
+                    <input id="phone" type="tel" name="phone" value={form.phone} onChange={handleChange} autoComplete="tel"
                     className="w-full bg-[#F3F3F3] px-4 py-2 rounded-[16px]"/> 
                 </div>
                 <div>
