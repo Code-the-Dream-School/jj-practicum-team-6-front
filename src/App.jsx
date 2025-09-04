@@ -3,7 +3,7 @@ import { getAllData } from './util/index';
 import { Routes, Route} from 'react-router-dom'
 import Profile from './pages/profile/Profile'
 import EditProfile from './pages/profile/EditProfile'
-
+import ItemsList from './pages/ItemsList'
 
 const URL = 'http://localhost:8000/api/v1/';
 
@@ -31,6 +31,7 @@ function App() {
       <Routes>
         <Route path='/profile' element={<Profile/>}/>
         <Route path='/profile/edit' element={<EditProfile/>}/>
+        <Route path='/items/list' element={<ItemsList/>}/>
       </Routes>
     </>
   );
