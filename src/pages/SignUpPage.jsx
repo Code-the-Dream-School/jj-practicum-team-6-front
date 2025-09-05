@@ -46,8 +46,9 @@ export default function SignUpPage() {
         lastName: form.lastName,
         email: form.email,
         password: form.password,
-        zipcode: form.zipcode,
-        phone: form.phone,
+        confirmPassword: form.confirmPassword,
+        zipCode: form.zipcode,
+        phoneNumber: form.phone,
       });
       nav("/signin");
     } catch (err) {

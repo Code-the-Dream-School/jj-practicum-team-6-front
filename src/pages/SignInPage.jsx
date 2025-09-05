@@ -29,7 +29,7 @@ export default function SignInPage() {
     if (!validate()) return;
     setLoading(true);
     try {
-  await signIn(form);
+      await signIn(form);
       nav("/");
     } catch (err) {
       setApiError(err.message || "Invalid credentials");
