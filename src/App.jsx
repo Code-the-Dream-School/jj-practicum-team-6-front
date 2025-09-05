@@ -3,6 +3,10 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { getAllData } from "./util/index";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
+import Profile from './pages/profile/Profile'
+import EditProfile from './pages/profile/EditProfile'
+
+const URL = 'http://localhost:8000/api/v1/';
 
 function App() {
   const [message, setMessage] = useState("");
@@ -44,6 +48,8 @@ function App() {
         <Route path="/" element={<h1>{message}</h1>} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path='/profile' element={<Profile/>}/>
+        <Route path='/profile/edit' element={<EditProfile/>}/>
       </Routes>
     </BrowserRouter>
   );
