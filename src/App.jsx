@@ -3,13 +3,12 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { getAllData } from "./util/index";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
-import Profile from './pages/profile/Profile'
-import EditProfile from './pages/profile/EditProfile'
+import Profile from "./pages/profile/Profile";
+import EditProfile from "./pages/profile/EditProfile";
+import EditItem from "./pages/items/EditItem";
+import ItemsList from "./pages/ItemsList";
 
-import ItemsList from './pages/ItemsList'
-
-
-const URL = 'http://localhost:8000/api/v1/';
+const URL = "http://localhost:8000/api/v1/";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -31,7 +30,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+   <>
       <header className="flex items-center justify-between px-4 py-3 border-b">
         <div className="text-lg">Logo</div>
         <nav className="flex gap-2">
@@ -51,11 +50,12 @@ function App() {
         <Route path="/" element={<h1>{message}</h1>} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
-        <Route path='/profile' element={<Profile/>}/>
-        <Route path='/profile/edit' element={<EditProfile/>}/>
-        <Route path='/items/list' element={<ItemsList/>}/>
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/edit" element={<EditProfile />} />
+        <Route path="/items/list" element={<ItemsList />} />
+        <Route path="/items/edit/:id" element={<EditItem />} />
       </Routes>
-    </BrowserRouter>
+   </>
   );
 }
 

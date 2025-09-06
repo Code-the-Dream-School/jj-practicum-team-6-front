@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
-export default function ItemCard({ item }) {
+export default function ItemCard({ item, currentUserId }) {
   const navigate = useNavigate();
+ const isOwner = item.userId === currentUserId
 
   const handleEdit = () => {
     navigate(`/items/edit/${item.id}`);
@@ -38,7 +39,7 @@ export default function ItemCard({ item }) {
       <h4 className="font-semibold mb-1">{item.title}</h4>
       <p className="text-sm text-gray-600">{item.location}</p>
       <p className="text-sm text-gray-500">{item.date}</p>
-
+ {isOwner && (
       <div className="flex justify-end gap-2 mt-2">
         <button
           onClick={handleEdit}
@@ -53,6 +54,7 @@ export default function ItemCard({ item }) {
           <FaTrash /> Delete
         </button>
       </div>
+ )}
     </div>
   );
 }
