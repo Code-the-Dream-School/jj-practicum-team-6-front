@@ -1,24 +1,31 @@
 export default function Input({
+  id,
   name,
   type = "text",
   value,
   onChange,
   placeholder,
-  error,
+  required,
+  className = "",
+  rightIcon = null,
 }) {
   return (
-    <div className="mb-4">
+    <div className="relative">
       <input
-        id={name}
+        id={id || name}
         name={name}
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`input w-[300px] border-none focus:outline-none ${error ? "border-red-500" : ""}`}
-        aria-invalid={!!error}
+        required={required}
+        className={`w-full border rounded-[14px] px-4 py-3 font-roboto text-ink placeholder:text-gray-400 transition hover:border-primary focus:border-success focus:outline-none ${className}`}
       />
-      {error ? <p className="text-xs text-red-600 mt-1">{error}</p> : null}
+      {rightIcon ? (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          {rightIcon}
+        </span>
+      ) : null}
     </div>
   );
 }
