@@ -1,5 +1,6 @@
 
 export default {
+  safelist: ["font-body", "font-display", "font-script"],
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
