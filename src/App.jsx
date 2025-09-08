@@ -5,11 +5,11 @@ import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import Profile from "./pages/profile/Profile";
 import EditProfile from "./pages/profile/EditProfile";
+import EditItem from "./pages/items/EditItem";
 import ItemsList from './pages/ItemsList'
 import AddLostItemPage from "./pages/AddLostItemPage";
 
-
-const URL = 'http://localhost:8000/api/v1/';
+const URL = "http://localhost:8000/api/v1/";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -50,11 +50,11 @@ function App() {
         <Route path="/" element={<h1>{message}</h1>} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
-
         <Route path='/profile' element={<Profile/>}/>
         <Route path='/profile/edit' element={<EditProfile/>}/>
         <Route path='/items/list' element={<ItemsList/>}/>
         <Route path="/items/new/lost" element={<AddLostItemPage />} />
+          <Route path="/items/edit/:id" element={<EditItem />} />
       </Routes>
     </>
   );
