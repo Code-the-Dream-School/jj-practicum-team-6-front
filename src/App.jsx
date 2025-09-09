@@ -8,6 +8,9 @@ import EditProfile from "./pages/profile/EditProfile";
 import EditItem from "./pages/items/EditItem";
 import ItemsList from "./pages/ItemsList";
 
+import './index.css'; // NOT ./index.module.css
+
+
 const URL = "http://localhost:8000/api/v1/";
 
 function App() {
