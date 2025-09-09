@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import { signIn } from "../services/authService";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function SignInPage() {
   const nav = useNavigate();
@@ -102,13 +103,27 @@ export default function SignInPage() {
           <p className="mb-3 text-sm text-red-600">{apiError}</p>
         ) : null}
         <div className="mt-4">
-          <button
+          {/* <button
             type="submit"
             disabled={loading}
             className="w-full h-[50px] rounded-[25px] bg-black !text-white hover:opacity-90 flex items-center justify-center"
           >
             {loading ? "Signing in..." : "Sign in"}
-          </button>
+          </button> */}
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-[50px] rounded-[25px] bg-black !text-white hover:opacity-90 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <LoadingSpinner size="small" color="white" />
+                Signing in...
+              </>
+            ) : (
+              "Sign in"
+            )}
+          </Button>
         </div>
       </form>
     </main>
