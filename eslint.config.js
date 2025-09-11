@@ -26,11 +26,11 @@ import eslintPluginReact from 'eslint-plugin-react';
 
 export default [
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       parser: '@babel/eslint-parser', // add this line
       ecmaVersion: 2021,
-      sourceType: 'module',
+      sourceType: "module",
       globals: {
         React: 'writable',
       },
@@ -45,8 +45,8 @@ export default [
       react: eslintPluginReact,
     },
     rules: {
-      'react/react-in-jsx-scope': 'off',
-      'react/prop-types': 'off',
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
     },
   },
 ];

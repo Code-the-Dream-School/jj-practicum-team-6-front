@@ -1,11 +1,13 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Routes, Route, Link } from "react-router-dom";
+import { getAllData } from "./util/index";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import Profile from "./pages/profile/Profile";
 import EditProfile from "./pages/profile/EditProfile";
 import EditItem from "./pages/items/EditItem";
-import ItemsList from "./pages/ItemsList";
+import ItemsList from './pages/ItemsList'
+import AddLostItemPage from "./pages/AddLostItemPage";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import Header from "./components/layout/Header";

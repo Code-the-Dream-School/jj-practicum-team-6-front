@@ -2,6 +2,7 @@ export default function Button({
   children,
   type = "button",
   disabled = false,
+  disabled = false,
   onClick,
   variant = "primary",
   size = "medium",

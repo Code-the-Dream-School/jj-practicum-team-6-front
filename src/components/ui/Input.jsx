@@ -1,15 +1,18 @@
 export default function Input({
+  id,
   name,
   type = "text",
   value,
   onChange,
   placeholder,
-  error,
+  required,
+  className = "",
+  rightIcon = null,
 }) {
   return (
-    <div className="mb-4">
+    <div className="relative">
       <input
-        id={name}
+        id={id || name}
         name={name}
         type={type}
         value={value}
@@ -20,7 +23,11 @@ export default function Input({
         }`}
         aria-invalid={!!error}
       />
-      {error ? <p className="text-xs text-red-600 mt-1">{error}</p> : null}
+      {rightIcon ? (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          {rightIcon}
+        </span>
+      ) : null}
     </div>
   );
 }
