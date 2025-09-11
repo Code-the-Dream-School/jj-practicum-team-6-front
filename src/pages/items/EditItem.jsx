@@ -1,57 +1,56 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 const mockItems = [
   {
     id: 1,
-    title: 'Lost Wallet',
-    status: 'Lost',
-    location: 'Central Park',
-    date: '2025-08-10',
-    imageUrl: '/wallet.jpg',
+    title: "Lost Wallet",
+    status: "Lost",
+    location: "Central Park",
+    date: "2025-08-10",
+    imageUrl: "/wallet.jpg",
   },
   {
     id: 2,
-    title: 'Keys',
-    status: 'Found',
-    location: 'Times Square',
-    date: '2025-08-08',
-    imageUrl: '/keys.jpg',
+    title: "Keys",
+    status: "Found",
+    location: "Times Square",
+    date: "2025-08-08",
+    imageUrl: "/keys.jpg",
   },
 ];
 
 export default function EditItemPage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [itemData, setItemData] = useState(null)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [itemData, setItemData] = useState(null);
 
-  useEffect(()=>{
-    const item= mockItems.find((i)=>i.id ===parseInt(id))
-    if (item){
-        setItemData(item)
-    } else{
-        alert('Item not found')
-        navigate('/')
+  useEffect(() => {
+    const item = mockItems.find((i) => i.id === parseInt(id));
+    if (item) {
+      setItemData(item);
+    } else {
+      alert("Item not found");
+      navigate("/");
     }
-  }, [id, navigate])
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setItemData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-}
+    }));
+  };
 
-const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Updated Item:', itemData)
-    alert('Item updated!')
-        navigate('/')
-}
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Updated Item:", itemData);
+    alert("Item updated!");
+    navigate("/");
+  };
 
-if (!itemData) return <p>Loading...</p>;
+  if (!itemData) return <p>Loading...</p>;
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
@@ -89,7 +88,7 @@ if (!itemData) return <p>Loading...</p>;
             required
           />
         </div>
-         <div>
+        <div>
           <label className="block font-medium mb-1">Status</label>
           <select
             name="status"

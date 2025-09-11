@@ -8,55 +8,38 @@ import EditProfile from "./pages/profile/EditProfile";
 import EditItem from "./pages/items/EditItem";
 import ItemsList from './pages/ItemsList'
 import AddLostItemPage from "./pages/AddLostItemPage";
+import LandingPage from "./pages/LandingPage";
+import NotFound from "./pages/NotFound";
+import Header from "./components/layout/Header";
 
-const URL = "http://localhost:8000/api/v1/";
+import './index.css';
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const myData = await getAllData();
-        setMessage(myData?.data ?? "Welcome to Retrieve");
-      } catch (err) {
-        console.error("getAllData failed:", err);
-        setMessage("Welcome to Retrieve");
-      }
-    })();
-
-    return () => {
-      console.log("unmounting");
-    };
-  }, []);
-
   return (
-    <>
-      <header className="flex items-center justify-between px-4 py-3 border-b">
-        <div className="text-lg">Logo</div>
-        <nav className="flex gap-2">
-          <Link to="/signin" className="px-3 py-1 rounded-full border">
-            Sign in
-          </Link>
-          <Link
-            to="/signup"
-            className="px-3 py-1 rounded-full bg-black text-white"
-          >
-            Sign up
-          </Link>
-        </nav>
-      </header>
-      <Routes>
-        <Route path="/" element={<h1>{message}</h1>} />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path='/profile' element={<Profile/>}/>
-        <Route path='/profile/edit' element={<EditProfile/>}/>
-        <Route path='/items/list' element={<ItemsList/>}/>
-        <Route path="/items/new/lost" element={<AddLostItemPage />} />
+    <div className="min-h-screen flex flex-col">
+      {/* One header for all pages */}
+      <Header />
+      
+      <main className="flex-1">
+        <Routes>
+          {/* Landing page */}
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* Auth pages */}
+          <Route path="/signin" element={<SignInPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          
+          {/* App pages */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/items/list" element={<ItemsList />} />
           <Route path="/items/edit/:id" element={<EditItem />} />
-      </Routes>
-    </>
+          
+          {/* 404 Page */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
 

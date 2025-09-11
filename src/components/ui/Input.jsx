@@ -18,8 +18,10 @@ export default function Input({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        required={required}
-        className={`w-full border rounded-[14px] px-4 py-3 font-roboto text-ink placeholder:text-gray-400 transition hover:border-primary focus:border-success focus:outline-none ${className}`}
+        className={`input w-[300px] border-none focus:outline-none ${
+          error ? "border-red-500" : ""
+        }`}
+        aria-invalid={!!error}
       />
       {rightIcon ? (
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
