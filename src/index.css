@@ -143,3 +143,21 @@
 .to-blue-50 {
   --tw-gradient-to: #eff6ff;
 }
+
+/* Ensure Leaflet maps size properly */
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Map marker styles -- recent edit */ 
+.item-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Fix for map in containers */
+.leaflet-map-pane {
+  z-index: 1;
+}
+
