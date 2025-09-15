@@ -8,6 +8,7 @@ export default function Input({
   required,
   className = "",
   rightIcon = null,
+  error, //adding the error prop
 }) {
   return (
     <div className="relative">

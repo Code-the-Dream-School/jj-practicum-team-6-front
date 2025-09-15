@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { getAllData } from "../util/index";
 import HeroSection from "../components/layout/HeroSection";
+import LandingMapSection from "../components/layout/LandingMapSection";
 import Footer from "../components/layout/Footer";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
+import Section from "../components/layout/Section";
 
 const LandingPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const URL = "http://localhost:8000/api/v1/";
+  const URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     (async () => {
@@ -53,81 +55,29 @@ const LandingPage = () => {
 
       <HeroSection />
 
-      {/* About Us Section */}
-      <section
-        id="about"
-        className="py-16 bg-white text-center min-h-[50vh] flex items-center"
-      >
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="font-display text-4xl font-bold text-ink mb-6">
-            About Us Section
-          </h2>
-          <p className="font-body text-lg text-gray600 leading-relaxed max-w-2xl mx-auto">
-            This will be the about us content. Click "About us" in the nav to
-            test smooth scrolling.
-          </p>
-        </div>
-      </section>
+      {/* NEW: Recently Added Map Section */}
+      <LandingMapSection />
 
-      {/* Our Values Section */}
-      <section
-        id="values"
-        className="py-16 bg-gray-100 text-center min-h-[50vh] flex items-center"
-      >
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="font-display text-4xl font-bold text-ink mb-6">
-            Our Values Section
-          </h2>
-          <p className="font-body text-lg text-gray600 leading-relaxed max-w-2xl mx-auto">
-            Values content will go here. Test navigation scrolling.
-          </p>
-        </div>
-      </section>
+      <Section id="about" title="About Us Section">
+        This will be the about us content. Click "About us" in the nav to test
+        smooth scrolling.
+      </Section>
 
-      {/* How It Works Section */}
-      <section
-        id="how-it-works"
-        className="py-16 bg-white text-center min-h-[50vh] flex items-center"
-      >
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="font-display text-4xl font-bold text-ink mb-6">
-            How It Works Section
-          </h2>
-          <p className="font-body text-lg text-gray600 leading-relaxed max-w-2xl mx-auto">
-            How it works content will go here.
-          </p>
-        </div>
-      </section>
+      <Section id="values" title="Our Values Section" bg="bg-gray-100">
+        Values content will go here. Test navigation scrolling.
+      </Section>
 
-      {/* Our Team Section */}
-      <section
-        id="team"
-        className="py-16 bg-gray-100 text-center min-h-[50vh] flex items-center"
-      >
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="font-display text-4xl font-bold text-ink mb-6">
-            Our Team Section
-          </h2>
-          <p className="font-body text-lg text-gray600 leading-relaxed max-w-2xl mx-auto">
-            Team content will go here.
-          </p>
-        </div>
-      </section>
+      <Section id="how-it-works" title="How It Works Section">
+        How it works content will go here.
+      </Section>
 
-      {/* Contacts Section */}
-      <section
-        id="contacts"
-        className="py-16 bg-white text-center min-h-[50vh] flex items-center"
-      >
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="font-display text-4xl font-bold text-ink mb-6">
-            Contacts Section
-          </h2>
-          <p className="font-body text-lg text-gray600 leading-relaxed max-w-2xl mx-auto">
-            Contact information will go here.
-          </p>
-        </div>
-      </section>
+      <Section id="team" title="Our Team Section" bg="bg-gray-100">
+        Team content will go here.
+      </Section>
+
+      <Section id="contacts" title="Contacts Section">
+        Contact information will go here.
+      </Section>
 
       <Footer />
     </>

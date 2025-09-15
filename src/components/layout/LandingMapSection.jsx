@@ -1,0 +1,127 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaList, FaMap } from "react-icons/fa";
+import { MdLocationPin } from "react-icons/md";
+import { SlCalender } from "react-icons/sl";
+import LocationMap from "../LocationMap";
+import { getRecentItems, mockStats } from "../../util/itemsData";
+
+const LandingMapSection = () => {
+  const [viewMode, setViewMode] = useState("map");
+  const navigate = useNavigate(); // ADD THIS LINE
+
+  // Use the util itemData shared data instead of duplicated mock data
+  const recentItems = getRecentItems(6);
+  const stats = mockStats;
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="max-w-6xl mx-auto px-6">
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-20 text-center">
+          {stats.map((stat, index) => (
+            <div key={index} className="flex flex-col items-center">
+              <div className="font-display text-6xl md:text-7xl font-bold text-ink mb-3 leading-none">
+                {stat.number}
+              </div>
+              <div className="font-body text-gray600 text-base font-normal">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recently Added Section */}
+        <div className="text-center mb-12">
+          <h2 className="font-display text-5xl md:text-6xl font-bold text-ink mb-12 leading-tight">
+            Recently Added
+          </h2>
+
+          {/* View Toggle */}
+          <div className="flex justify-center gap-3 mb-12">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-6 py-3 rounded-full flex items-center gap-3 font-medium text-sm transition-all duration-200 ${
+                viewMode === "list"
+                  ? "bg-ink text-white shadow-md"
+                  : "bg-gray-100 text-gray600 hover:bg-gray-200"
+              }`}
+            >
+              <FaList size={16} />
+              List of Items
+            </button>
+            <button
+              onClick={() => setViewMode("map")}
+              className={`px-6 py-3 rounded-full flex items-center gap-3 font-medium text-sm transition-all duration-200 ${
+                viewMode === "map"
+                  ? "bg-ink text-white shadow-md"
+                  : "bg-gray-100 text-gray600 hover:bg-gray-200"
+              }`}
+            >
+              <FaMap size={16} />
+              Map view
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        {viewMode === "map" ? (
+          <div className="h-[500px] w-full rounded-2xl overflow-hidden border border-gray-200 shadow-lg">
+            <LocationMap mode="display" items={recentItems} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {recentItems.map((item) => (
+              <div
+                key={item.id}
+                className="border border-gray-200 rounded-2xl shadow-sm p-6 bg-white hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+              >
+                <div className="mb-4">
+                  <span
+                    className={`text-xs px-4 py-2 rounded-full font-semibold ${
+                      item.status === "Lost"
+                        ? "bg-red-50 text-primary border border-red-100"
+                        : "bg-green-50 text-success border border-green-100"
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+                </div>
+                <div className="w-full h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-gray-400 text-3xl">
+                  {item.status === "Lost" ? "📱" : "🎒"}
+                </div>
+                <h4 className="font-display text-xl font-semibold text-ink mb-3 leading-tight">
+                  {item.title}
+                </h4>
+                <p className="font-body text-sm text-gray600 mb-2 flex items-center gap-2">
+                  <span className="text-gray-400">
+                    <MdLocationPin />
+                  </span>
+                  {item.location}
+                </p>
+                <p className="font-body text-sm text-gray-500 flex items-center gap-2">
+                  <span className="text-gray-400">
+                    <SlCalender />
+                  </span>
+                  {item.date}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* View All item button to go to the List all items page */}
+        <div className="text-center mt-12">
+          <button
+            onClick={() => navigate("/items/list")}
+            className="bg-ink text-white px-8 py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
+          >
+            View all items →
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default LandingMapSection;
