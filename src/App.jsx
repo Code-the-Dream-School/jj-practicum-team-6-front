@@ -34,6 +34,7 @@ function App() {
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/items/list" element={<ItemsList />} />
           <Route path="/items/edit/:id" element={<EditItem />} />
+          <Route path="/items/new" element={<AddLostItemPage />} />
           
           {/* 404 Page */}
           <Route path="*" element={<NotFound />} />

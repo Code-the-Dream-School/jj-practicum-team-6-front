@@ -1,6 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import Button from "../ui/Button";
+import ProfileMenu from '../ProfileMenu';
+import {
+  FaMapMarkerAlt,
+  FaCalendarAlt,
+  FaImage,
+  FaUserCircle,
+  FaHome,
+  FaPlusCircle,
+  FaUpload,
+} from "react-icons/fa";
+
 
 const Header = () => {
   const location = useLocation();
@@ -114,8 +125,8 @@ const Header = () => {
         )}
 
         {/* Auth Section - Right */}
-        <div className="flex justify-end">
-          <div className="flex items-center gap-4">
+        {/* <div className="flex justify-end"> */}
+          {/* <div className="flex items-center gap-4">
             <Button
               variant="outline"
               size="small"
@@ -130,9 +141,90 @@ const Header = () => {
             >
               Sign up
             </Button>
-          </div>
+          </div> */}
+
+         {/* Right Section */}
+<div className="flex justify-end">
+  {localStorage.getItem("token") ? (
+    <div className="flex items-center gap-6">
+      
+      {/* Logged-in navbar links */}
+            <nav className="flex gap-8 items-center">
+              <Link
+                 to="/"
+                 className="flex items-center gap-2 font-semibold"
+                  title="Home"
+              >
+                <FaHome className="text-2xl" />
+             </Link>
+              <a
+                href="/items/list"
+                className="flex items-center gap-2 font-semibold"
+              >
+                <span>All items</span>
+              </a>
+              <a
+                href="/items/new"
+                className="flex items-center gap-2 font-semibold"
+              >
+                <FaPlusCircle className="text-[#E66240] text-xl" />
+                <span className="text-[#E66240]">Add lost item</span>
+              </a>
+              <a
+                href="/items/new"
+                className="flex items-center gap-2 font-semibold"
+              >
+                <FaPlusCircle className="text-[#7FD96C] text-xl" />
+                <span className="text-[#7FD96C]">Add found item</span>
+              </a>
+          </nav>
+         
+        
+    {/* <Link to="/" title="Home" className="hover:text-primary">
+  //   <HomeIcon className="h-6 w-6 text-gray-700" />
+  // </Link>
+
+  //  <Link to="/items/list" className="text-gray-700 hover:text-primary font-small">My Items</Link>   
+
+  //    <Link
+  //   to="/items/new/lost"
+  //   className="flex items-center gap-1 text-red-600 hover:text-red-700 font-small"
+  // >
+  //   <PlusCircleIcon className="h-10 w-10" />
+  //   Add Lost Item
+  // </Link>
+
+  //     <Link
+  //   to="/items/new/found"
+  //   className="flex items-center gap-1 text-green-600 hover:text-green-700 font-small"
+  // >
+  //   <PlusCircleIcon className="h-10 w-10" />
+  //   Add Found Item
+  // </Link>
+
+      {/* Profile dropdown */}
+      <ProfileMenu />
+    </div> 
+  ) : (
+    <div className="flex items-center gap-4">
+      <Button
+        variant="outline"
+        size="small"
+        onClick={() => handleAuthClick("signin")}
+      >
+        Sign in
+      </Button>
+      <Button
+        variant="secondary"
+        size="small"
+        onClick={() => handleAuthClick("signup")}
+      >
+        Sign up
+      </Button>
+    </div>
+  )}
+</div>
         </div>
-      </div>
     </header>
   );
 };

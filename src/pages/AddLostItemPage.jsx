@@ -73,7 +73,7 @@ export default function AddLostItemPage({ currentUser }) {
   return (
     <div className="min-h-screen flex flex-col items-center">
       <main className="w-full">
-        {/* Header */}
+        {/* Header
         <header className="w-full bg-white border-b">
           <div className="mx-auto max-w-6xl px-8 py-6 flex justify-between items-center">
             <div className="font-bold text-xl">Retrieve</div>
@@ -107,7 +107,7 @@ export default function AddLostItemPage({ currentUser }) {
               </span>
             </nav>
           </div>
-        </header>
+        </header> */}
 
         {/* Title */}
         <h1 className="text-center font-display text-3xl md:text-4xl font-black mt-10 mb-8">
