@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import Button from "../ui/Button";
-import ProfileMenu from '../ProfileMenu';
-import {
-  FaMapMarkerAlt,
-  FaCalendarAlt,
-  FaImage,
-  FaUserCircle,
-  FaHome,
-  FaPlusCircle,
-  FaUpload,
-} from "react-icons/fa";
+import InternalNavbar from "./InternalNavbar";
+// import {
+//   FaMapMarkerAlt,
+//   FaCalendarAlt,
+//   FaImage,
+//   FaUserCircle,
+//   FaHome,
+//   FaPlusCircle,
+//   FaUpload,
+// } from "react-icons/fa";
 
 
 const Header = () => {
@@ -69,7 +69,7 @@ const Header = () => {
         </Link>
 
         {/* Navigation Section - Center (Only show on landing page) */}
-        {isLandingPage && (
+        {isLandingPage ? (
           <nav className="hidden lg:flex justify-center">
             <div className="relative flex items-center bg-gray-100 rounded-full p-1">
               {/* Sliding background pill with orange border */}
@@ -108,25 +108,27 @@ const Header = () => {
               ))}
             </div>
           </nav>
-        )}
+        ) :(
+          <>
 
-        {/* For non-landing pages, show current page title in center */}
-        {!isLandingPage && (
-          <div className="hidden lg:flex justify-center">
+          {/* For non-landing pages, show current page title in center */}
+
+ <div className="hidden lg:flex justify-center">
             <span className="font-medium text-gray600">
-              {location.pathname === "/signin" && "Sign In"}
-              {location.pathname === "/signup" && "Sign Up"}
+              {/* {location.pathname === "/signin" && "Sign In"}
+              {location.pathname === "/signup" && "Sign Up"} 
               {location.pathname === "/profile" && "Profile"}
               {location.pathname === "/items/list" && "Items"}
               {location.pathname.includes("/items/edit") && "Edit Item"}
-              {location.pathname.includes("/profile/edit") && "Edit Profile"}
-            </span>
+              {location.pathname.includes("/profile/edit") && "Edit Profile"} */}
+             </span>
           </div>
+          </>
         )}
-
         {/* Auth Section - Right */}
-        {/* <div className="flex justify-end"> */}
-          {/* <div className="flex items-center gap-4">
+    <div className="flex justify-end">
+      {isLandingPage ? (
+            <div className="flex items-center gap-4">
             <Button
               variant="outline"
               size="small"
@@ -141,91 +143,31 @@ const Header = () => {
             >
               Sign up
             </Button>
-          </div> */}
-
-         {/* Right Section */}
-<div className="flex justify-end">
-  {localStorage.getItem("token") ? (
-    <div className="flex items-center gap-6">
-      
-      {/* Logged-in navbar links */}
-            <nav className="flex gap-8 items-center">
-              <Link
-                 to="/"
-                 className="flex items-center gap-2 font-semibold"
-                  title="Home"
+          </div> 
+           ) : localStorage.getItem("token") ? (
+            <InternalNavbar />
+          ) : (
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="small"
+                onClick={() => handleAuthClick("signin")}
               >
-                <FaHome className="text-2xl" />
-             </Link>
-              <a
-                href="/items/list"
-                className="flex items-center gap-2 font-semibold"
+                Sign in
+              </Button>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => handleAuthClick("signup")}
               >
-                <span>All items</span>
-              </a>
-              <a
-                href="/items/new"
-                className="flex items-center gap-2 font-semibold"
-              >
-                <FaPlusCircle className="text-[#E66240] text-xl" />
-                <span className="text-[#E66240]">Add lost item</span>
-              </a>
-              <a
-                href="/items/new"
-                className="flex items-center gap-2 font-semibold"
-              >
-                <FaPlusCircle className="text-[#7FD96C] text-xl" />
-                <span className="text-[#7FD96C]">Add found item</span>
-              </a>
-          </nav>
-         
-        
-    {/* <Link to="/" title="Home" className="hover:text-primary">
-  //   <HomeIcon className="h-6 w-6 text-gray-700" />
-  // </Link>
-
-  //  <Link to="/items/list" className="text-gray-700 hover:text-primary font-small">My Items</Link>   
-
-  //    <Link
-  //   to="/items/new/lost"
-  //   className="flex items-center gap-1 text-red-600 hover:text-red-700 font-small"
-  // >
-  //   <PlusCircleIcon className="h-10 w-10" />
-  //   Add Lost Item
-  // </Link>
-
-  //     <Link
-  //   to="/items/new/found"
-  //   className="flex items-center gap-1 text-green-600 hover:text-green-700 font-small"
-  // >
-  //   <PlusCircleIcon className="h-10 w-10" />
-  //   Add Found Item
-  // </Link>
-
-      {/* Profile dropdown */}
-      <ProfileMenu />
-    </div> 
-  ) : (
-    <div className="flex items-center gap-4">
-      <Button
-        variant="outline"
-        size="small"
-        onClick={() => handleAuthClick("signin")}
-      >
-        Sign in
-      </Button>
-      <Button
-        variant="secondary"
-        size="small"
-        onClick={() => handleAuthClick("signup")}
-      >
-        Sign up
-      </Button>
-    </div>
-  )}
-</div>
-        </div>
-    </header>
+                Sign up
+              </Button>
+            </div>
+       
+            )}
+          </div>
+      </div>
+      </header>
   );
 };
 
