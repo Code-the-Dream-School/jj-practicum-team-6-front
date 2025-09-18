@@ -6,29 +6,31 @@ import SignUpPage from "./pages/SignUpPage";
 import Profile from "./pages/profile/Profile";
 import EditProfile from "./pages/profile/EditProfile";
 import EditItem from "./pages/items/EditItem";
-import ItemsList from './pages/ItemsList'
+import ItemsList from "./pages/ItemsList";
 import AddLostItemPage from "./pages/AddLostItemPage";
 import LandingPage from "./pages/LandingPage";
+
+import MessagesPage from "./pages/MessagesPage";
 import NotFound from "./pages/NotFound";
 import Header from "./components/layout/Header";
 
-import './index.css';
+import "./index.css";
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* One header for all pages */}
       <Header />
-      
+
       <main className="flex-1">
         <Routes>
           {/* Landing page */}
           <Route path="/" element={<LandingPage />} />
-          
+
           {/* Auth pages */}
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
-          
+
           {/* App pages */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />

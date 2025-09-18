@@ -12,66 +12,12 @@ export default function MessagesPage() {
     open: false,
     threadId: null,
   });
-  const mockThreads = [
-    {
-      id: "thread1",
-      item: {
-        title: "Black iPhone 13",
-        primaryPhotoUrl: "https://i.imgur.com/1Q9Z1Zm.png",
-      },
-      owner: {
-        firstName: "Jane",
-        lastName: "K",
-        avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
-      },
-      participant: { firstName: "Test", lastName: "User2", avatarUrl: null },
-      messages: [
-        {
-          id: 1,
-          sender: "me",
-          body: "Hi! I think I may have found the item you posted about. Let's connect",
-          createdAt: "2025-09-18T09:00:00.000Z",
-        },
-        {
-          id: 2,
-          sender: "other",
-          body: "Thank you! Can you send a photo?",
-          createdAt: "2025-09-18T09:01:00.000Z",
-        },
-      ],
-    },
-    {
-      id: "thread2",
-      item: { title: "Brown Backpack", primaryPhotoUrl: "" },
-      owner: {
-        firstName: "Jane",
-        lastName: "K",
-        avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
-      },
-      participant: { firstName: "Test", lastName: "User3", avatarUrl: null },
-      messages: [
-        {
-          id: 1,
-          sender: "me",
-          body: "Is this your backpack?",
-          createdAt: "2025-09-17T15:00:00.000Z",
-        },
-        {
-          id: 2,
-          sender: "other",
-          body: "Yes, thank you!",
-          createdAt: "2025-09-17T15:01:00.000Z",
-        },
-      ],
-    },
-  ];
-
-  const [threads, setThreads] = useState(mockThreads);
-  const [activeThreadId, setActiveThreadId] = useState(mockThreads[0].id);
+  const [threads, setThreads] = useState([]);
+  const [activeThreadId, setActiveThreadId] = useState("");
   const [input, setInput] = useState("");
   const [loadingChats] = useState(false);
   const [loadingMessages] = useState(false);
-  const [messages, setMessages] = useState(mockThreads[0].messages);
+  const [messages, setMessages] = useState([]);
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportText, setReportText] = useState("");
@@ -252,7 +198,8 @@ export default function MessagesPage() {
                   type="button"
                   title="Report"
                 >
-                  <FaFlag className="text-lg" />Report
+                  <FaFlag className="text-lg" />
+                  Report
                 </button>
                 <ReportModal
                   show={showReportModal}
