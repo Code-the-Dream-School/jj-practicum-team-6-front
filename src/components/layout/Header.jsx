@@ -1,6 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import Button from "../ui/Button";
+import InternalNavbar from "./InternalNavbar";
+// import {
+//   FaMapMarkerAlt,
+//   FaCalendarAlt,
+//   FaImage,
+//   FaUserCircle,
+//   FaHome,
+//   FaPlusCircle,
+//   FaUpload,
+// } from "react-icons/fa";
+
 
 const Header = () => {
   const location = useLocation();
@@ -58,7 +69,7 @@ const Header = () => {
         </Link>
 
         {/* Navigation Section - Center (Only show on landing page) */}
-        {isLandingPage && (
+        {isLandingPage ? (
           <nav className="hidden lg:flex justify-center">
             <div className="relative flex items-center bg-gray-100 rounded-full p-1">
               {/* Sliding background pill with orange border */}
@@ -97,25 +108,27 @@ const Header = () => {
               ))}
             </div>
           </nav>
-        )}
+        ) :(
+          <>
 
-        {/* For non-landing pages, show current page title in center */}
-        {!isLandingPage && (
-          <div className="hidden lg:flex justify-center">
+          {/* For non-landing pages, show current page title in center */}
+
+ <div className="hidden lg:flex justify-center">
             <span className="font-medium text-gray600">
-              {location.pathname === "/signin" && "Sign In"}
-              {location.pathname === "/signup" && "Sign Up"}
+              {/* {location.pathname === "/signin" && "Sign In"}
+              {location.pathname === "/signup" && "Sign Up"} 
               {location.pathname === "/profile" && "Profile"}
               {location.pathname === "/items/list" && "Items"}
               {location.pathname.includes("/items/edit") && "Edit Item"}
-              {location.pathname.includes("/profile/edit") && "Edit Profile"}
-            </span>
+              {location.pathname.includes("/profile/edit") && "Edit Profile"} */}
+             </span>
           </div>
+          </>
         )}
-
         {/* Auth Section - Right */}
-        <div className="flex justify-end">
-          <div className="flex items-center gap-4">
+    <div className="flex justify-end">
+      {isLandingPage ? (
+            <div className="flex items-center gap-4">
             <Button
               variant="outline"
               size="small"
@@ -130,10 +143,31 @@ const Header = () => {
             >
               Sign up
             </Button>
+          </div> 
+           ) : localStorage.getItem("token") ? (
+            <InternalNavbar />
+          ) : (
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="small"
+                onClick={() => handleAuthClick("signin")}
+              >
+                Sign in
+              </Button>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => handleAuthClick("signup")}
+              >
+                Sign up
+              </Button>
+            </div>
+       
+            )}
           </div>
-        </div>
       </div>
-    </header>
+      </header>
   );
 };
 
