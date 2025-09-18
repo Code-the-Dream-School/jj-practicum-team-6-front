@@ -3,6 +3,8 @@ import { Routes, Route, Link } from "react-router-dom";
 import { getAllData } from "./util/index";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
+import ForgotPasswordPage from "./pages/ForgotPassword";
+import ResetPasswordPage from "./pages/ResetPassword";
 import Profile from "./pages/profile/Profile";
 import EditProfile from "./pages/profile/EditProfile";
 import EditItem from "./pages/items/EditItem";
@@ -28,6 +30,8 @@ function App() {
           {/* Auth pages */}
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage/>} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           
           {/* App pages */}
           <Route path="/profile" element={<Profile />} />

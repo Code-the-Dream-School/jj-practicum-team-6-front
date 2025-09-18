@@ -110,6 +110,8 @@ export default function SignInPage() {
           >
             {loading ? "Signing in..." : "Sign in"}
           </button> */}
+          
+
           <Button
             type="submit"
             disabled={loading}
@@ -124,6 +126,10 @@ export default function SignInPage() {
               "Sign in"
             )}
           </Button>
+
+          <p className="text-sm text-gray-700 mt-8 text-center mb-6">
+            <Link to="/forgot-password" className="underline">Forgot password?</Link>
+          </p>
         </div>
       </form>
     </main>
