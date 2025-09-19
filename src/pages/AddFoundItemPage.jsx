@@ -1,11 +1,15 @@
 import { useState, useRef } from "react";
-import { FaMapMarkerAlt, FaImage, FaUpload } from "react-icons/fa";
+import {
+  FaMapMarkerAlt,
+  FaImage,
+  FaUpload,
+} from "react-icons/fa";
 import Input from "../components/ui/Input.jsx";
 import LocationMap from "../components/LocationMap.jsx";
 import Button from "../components/ui/Button.jsx";
 import Footer from "../components/layout/Footer.jsx";
 
-export default function AddLostItemPage({ currentUser }) {
+export default function AddFoundItemPage({ currentUser }) {
   const [showMap, setShowMap] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -60,7 +64,7 @@ export default function AddLostItemPage({ currentUser }) {
     <div className="min-h-screen bg-white flex flex-col items-center">
       <main className="w-full">
         <h1 className="text-center font-display text-4xl font-black mt-10 mb-8">
-          Add Lost Item
+          Add Found Item
         </h1>
         <form
           onSubmit={onSubmit}
@@ -96,7 +100,7 @@ export default function AddLostItemPage({ currentUser }) {
           <div className="flex gap-4 mb-4 items-end">
             <div className="flex-1">
               <label className="block font-semibold mb-2">
-                Location Where Lost *
+                Location Where Found *
               </label>
               <Input
                 name="location"
@@ -129,14 +133,12 @@ export default function AddLostItemPage({ currentUser }) {
                   <div className="w-full h-80 overflow-hidden rounded-lg">
                     <LocationMap onSelect={handleMapSelect} />
                   </div>
-                  <p className="mt-3 text-sm text-gray-500">
-                    Click on the map to set location
-                  </p>
+                  <p className="mt-3 text-sm text-gray-500">Click on the map to set location</p>
                 </div>
               </div>
             )}
             <div className="flex-1">
-              <label className="block font-semibold mb-2">Date Lost</label>
+              <label className="block font-semibold mb-2">Date Found</label>
               <div className="relative">
                 <Input
                   ref={dateRef}
@@ -162,9 +164,9 @@ export default function AddLostItemPage({ currentUser }) {
               className="w-full rounded-full border border-gray-200 px-4 py-3 pr-12 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
               style={{
                 backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='36' viewBox='0 0 24 24' width='36' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")`,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 1rem center",
-                backgroundSize: "2rem",
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 1rem center',
+                backgroundSize: '2rem'
               }}
             >
               <option value="Electronic">Electronic</option>

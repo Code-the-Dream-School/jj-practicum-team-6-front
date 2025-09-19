@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaList, FaMap, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaList, FaMap, FaEdit, FaTrash } from "react-icons/fa";
 import LocationMap from "../components/LocationMap";
 import { mockItems, filterItems } from "../util/itemsData";
 
@@ -51,12 +51,6 @@ export default function ItemsList() {
           <h1 className="font-display text-4xl font-bold text-ink">
             List of Lost/Found Items
           </h1>
-          <button
-            onClick={() => navigate("/items/new")}
-            className="flex items-center gap-2 bg-success text-white font-medium px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
-          >
-            <FaPlus size={16} /> Add New Item
-          </button>
         </div>
 
         {/* View Toggle */}
@@ -86,7 +80,7 @@ export default function ItemsList() {
         </div>
 
         {/* Search and Controls */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+        <div className="flex flex-col lg:flex-row gap-4 mb-8 items-center">
           {/* Search Input */}
           <div className="flex-1">
             <input
@@ -133,7 +127,7 @@ export default function ItemsList() {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="relative">
+          <div className="relative self-stretch flex items-center">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
@@ -215,7 +209,6 @@ export default function ItemsList() {
                       </p>
                     </div>
 
-                    {/* Action Buttons for Owner: needs more work */}
                     {item.userId === currentUserId && (
                       <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
                         <button className="font-body text-sm text-gray600 hover:text-ink transition-colors">

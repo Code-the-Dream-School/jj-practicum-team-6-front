@@ -114,14 +114,6 @@ const Header = () => {
           {/* For non-landing pages, show current page title in center */}
 
  <div className="hidden lg:flex justify-center">
-            <span className="font-medium text-gray600">
-              {/* {location.pathname === "/signin" && "Sign In"}
-              {location.pathname === "/signup" && "Sign Up"} 
-              {location.pathname === "/profile" && "Profile"}
-              {location.pathname === "/items/list" && "Items"}
-              {location.pathname.includes("/items/edit") && "Edit Item"}
-              {location.pathname.includes("/profile/edit") && "Edit Profile"} */}
-             </span>
           </div>
           </>
         )}

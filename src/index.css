@@ -14,25 +14,26 @@
 
 /* Add this to your existing index.css file */
 
-@import url('https://fonts.googleapis.com/css2?family=Birthstone&family=Merriweather:wght@400;700&family=Roboto&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Birthstone&family=Merriweather:wght@400;700&family=Roboto&display=swap");
 @import "tailwindcss";
 
 /* Required @reference directive for using @apply with custom classes */
 @reference "tailwindcss";
 
 @theme {
-  --font-body: 'Roboto', ui-sans-serif, system-ui;
-  --font-display: 'Merriweather', serif;
-  --font-script: 'Birthstone', cursive;
-  
-  --color-primary: #E66240;
-  --color-ink: #1E1E1E;
-  --color-gray-600: #6F7273;
-  --color-gray-100: #F3F3F3;
-  --color-success: #7FD96C;
-  
+  --font-body: "Roboto", ui-sans-serif, system-ui;
+  --font-display: "Merriweather", serif;
+  --font-script: "Birthstone", cursive;
+
+  --color-primary: #e66240;
+  --color-ink: #1e1e1e;
+  --color-gray-600: #6f7273;
+  --color-gray-100: #f3f3f3;
+  --color-success: #7fd96c;
+
   --radius-14: 14px;
-  --shadow-card: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
+  --shadow-card:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
 /* Define custom font utilities */
@@ -67,7 +68,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -84,8 +86,10 @@
     @apply bg-white text-ink;
     font-family: var(--font-body);
   }
-  
-  h1, h2, h3 {
+
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display);
   }
 }
@@ -94,27 +98,27 @@
   .card {
     @apply border p-8 rounded-lg shadow-lg bg-white;
   }
-  
+
   .btn {
     @apply w-full rounded-lg px-4 py-3 text-center transition disabled:opacity-50;
   }
-  
+
   .btn-primary {
     @apply bg-ink text-white hover:opacity-90;
   }
-  
+
   .btn-accent {
     @apply bg-red-500 text-white hover:opacity-90;
   }
-  
+
   /* .input {
     @apply w-full rounded-full border border-gray-200 px-4 py-3 outline-none bg-white;
   } */
-  
+
   .input:hover {
     @apply border-red-500;
   }
-  
+
   .input:focus {
     @apply border-green-500;
   }
@@ -127,7 +131,11 @@
 }
 
 .backdrop-filter {
-  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+    var(--tw-backdrop-sepia);
 }
 
 /* Gradient utilities */
@@ -137,7 +145,8 @@
 
 .from-orange-50 {
   --tw-gradient-from: #fff7ed;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 247, 237, 0));
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--tw-gradient-to, rgba(255, 247, 237, 0));
 }
 
 .to-blue-50 {
@@ -150,7 +159,7 @@
   width: 100% !important;
 }
 
-/* Map marker styles -- recent edit */ 
+/* Map marker styles -- recent edit */
 .item-marker {
   background: transparent !important;
   border: none !important;
@@ -160,4 +169,3 @@
 .leaflet-map-pane {
   z-index: 1;
 }
-

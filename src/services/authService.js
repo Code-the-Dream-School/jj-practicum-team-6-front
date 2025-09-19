@@ -5,7 +5,7 @@ export function getAccessToken() {
 export function logout() {
   localStorage.removeItem("token");
 }
-const USE_MOCKS = false;
+const USE_MOCKS = true;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const JSON_HEADERS = { "Content-Type": "application/json" };
 

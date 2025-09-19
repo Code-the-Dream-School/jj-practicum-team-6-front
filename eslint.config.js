@@ -22,22 +22,23 @@
 
 // ---------------------------------------
 
-import eslintPluginReact from 'eslint-plugin-react';
+import eslintPluginReact from "eslint-plugin-react";
+import babelParser from "@babel/eslint-parser";
 
 export default [
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
-      parser: '@babel/eslint-parser', // add this line
+      parser: babelParser,
       ecmaVersion: 2021,
       sourceType: "module",
       globals: {
-        React: 'writable',
+        React: "writable",
       },
       parserOptions: {
         requireConfigFile: false, // allows babel parser without a full babel config
         babelOptions: {
-          presets: ['@babel/preset-react'],
+          presets: ["@babel/preset-react"],
         },
       },
     },

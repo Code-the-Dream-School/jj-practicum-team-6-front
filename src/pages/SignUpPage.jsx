@@ -51,6 +51,17 @@ export default function SignUpPage() {
         zipCode: form.zipcode,
         phoneNumber: form.phone,
       });
+      // Save user data to localStorage for profile page
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          zipcode: form.zipcode,
+          phone: form.phone,
+        })
+      );
       nav("/signin");
     } catch (err) {
       setApiError(err.message || "Something went wrong!");

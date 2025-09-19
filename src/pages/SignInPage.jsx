@@ -31,7 +31,7 @@ export default function SignInPage() {
     setLoading(true);
     try {
       await signIn(form);
-      nav("/");
+      nav("/items/list");
     } catch (err) {
       setApiError(err.message || "Invalid credentials");
     } finally {
