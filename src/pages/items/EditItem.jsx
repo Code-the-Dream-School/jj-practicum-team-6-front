@@ -53,7 +53,7 @@ export default function EditItemPage() {
   if (!itemData) return <p>Loading...</p>;
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
+    <div className="max-w-xl mx-auto p-6 rounded shadow">
       <h2 className="text-2xl font-semibold mb-4">Edit Item</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
