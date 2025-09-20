@@ -52,14 +52,14 @@ export default function ProfileMenu() {
             <a href="/profile" className="block px-4 py-2 hover:bg-gray-100">
               My profile
             </a>
-            <a href="/threads" className="block px-4 py-2 hover:bg-gray-100">
+            <a href="/messages" className="block px-4 py-2 hover:bg-gray-100">
               Messages
             </a>
             <button
               onClick={handleLogout}
               className="w-full text-left block px-4 py-2 hover:bg-gray-100"
             >
-              Logout
+              Log out
             </button>
           </div>
         </div>

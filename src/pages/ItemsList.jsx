@@ -43,7 +43,7 @@ export default function ItemsList() {
   );
 
   return (
-    <div className="min-h-screen bg-white">
+    <div>
       {/* Main Container */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header Section */}

@@ -70,7 +70,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 bg-white min-h-screen">
+    <div className="max-w-6xl mx-auto px-6 py-8 min-h-screen">
       {/* profile Header */}
       <h1 className="font-display text-3xl font-bold text-ink text-center mb-8">
         My Profile

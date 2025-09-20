@@ -6,7 +6,6 @@ import SignUpPage from "./pages/SignUpPage";
 import Profile from "./pages/profile/Profile";
 import EditItem from "./pages/items/EditItem";
 import ItemsList from "./pages/ItemsList";
-import ItemsList from "./pages/ItemsList";
 import AddLostItemPage from "./pages/AddLostItemPage";
 import AddFoundItemPage from "./pages/AddFoundItemPage";
 import LandingPage from "./pages/LandingPage";
@@ -14,6 +13,7 @@ import LandingPage from "./pages/LandingPage";
 import MessagesPage from "./pages/MessagesPage";
 import NotFound from "./pages/NotFound";
 import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
 
 import "./index.css";
 
@@ -33,12 +33,14 @@ function App() {
           <Route path="/items/edit/:id" element={<EditItem />} />
           <Route path="/items/new/lost" element={<AddLostItemPage />} />
           <Route path="/items/new/found" element={<AddFoundItemPage />} />
+          <Route path="/threads" element={<MessagesPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }
 
 export default App;
-

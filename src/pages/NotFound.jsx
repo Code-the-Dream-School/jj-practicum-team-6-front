@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 function NotFound() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh] py-16 px-4 bg-white font-display">
+    <div className="flex items-center justify-center py-16 px-4 font-display">
       <div className="text-center max-w-lg">
         {/* Large 404 Number */}
         <div className="text-8xl font-light text-gray-300 leading-none mb-4 tracking-tight">

@@ -3,7 +3,6 @@ import { FaMapMarkerAlt, FaImage, FaUpload } from "react-icons/fa";
 import Input from "../components/ui/Input.jsx";
 import LocationMap from "../components/LocationMap.jsx";
 import Button from "../components/ui/Button.jsx";
-import Footer from "../components/layout/Footer.jsx";
 
 export default function AddLostItemPage({ currentUser }) {
   const [showMap, setShowMap] = useState(false);
@@ -34,8 +33,7 @@ export default function AddLostItemPage({ currentUser }) {
       } else if (data && data.display_name) {
         locationString = data.display_name;
       }
-    } catch (e) {
-    }
+    } catch (e) {}
     setForm((prev) => ({ ...prev, location: locationString }));
     setShowMap(false);
   }
@@ -57,14 +55,14 @@ export default function AddLostItemPage({ currentUser }) {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center">
+    <div className="flex flex-col items-center">
       <main className="w-full">
         <h1 className="text-center font-display text-4xl font-black mt-10 mb-8">
           Add Lost Item
         </h1>
         <form
           onSubmit={onSubmit}
-          className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 w-full max-w-3xl mx-auto"
+          className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 w-full max-w-3xl mx-auto mb-16"
         >
           <h2 className="text-2xl font-bold mb-6 font-display">Item Details</h2>
           {/* Item Title */}
@@ -237,7 +235,6 @@ export default function AddLostItemPage({ currentUser }) {
             </Button>
           </div>
         </form>
-        <Footer />
       </main>
     </div>
   );

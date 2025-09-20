@@ -1,13 +1,8 @@
 import { useState, useRef } from "react";
-import {
-  FaMapMarkerAlt,
-  FaImage,
-  FaUpload,
-} from "react-icons/fa";
+import { FaMapMarkerAlt, FaImage, FaUpload } from "react-icons/fa";
 import Input from "../components/ui/Input.jsx";
 import LocationMap from "../components/LocationMap.jsx";
 import Button from "../components/ui/Button.jsx";
-import Footer from "../components/layout/Footer.jsx";
 
 export default function AddFoundItemPage({ currentUser }) {
   const [showMap, setShowMap] = useState(false);
@@ -38,8 +33,7 @@ export default function AddFoundItemPage({ currentUser }) {
       } else if (data && data.display_name) {
         locationString = data.display_name;
       }
-    } catch (e) {
-    }
+    } catch (e) {}
     setForm((prev) => ({ ...prev, location: locationString }));
     setShowMap(false);
   }
@@ -61,14 +55,14 @@ export default function AddFoundItemPage({ currentUser }) {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center">
+    <div className="flex flex-col items-center">
       <main className="w-full">
         <h1 className="text-center font-display text-4xl font-black mt-10 mb-8">
           Add Found Item
         </h1>
         <form
           onSubmit={onSubmit}
-          className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 w-full max-w-3xl mx-auto"
+          className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 w-full max-w-3xl mx-auto mb-16"
         >
           <h2 className="text-2xl font-bold mb-6 font-display">Item Details</h2>
           {/* Item Title */}
@@ -133,7 +127,9 @@ export default function AddFoundItemPage({ currentUser }) {
                   <div className="w-full h-80 overflow-hidden rounded-lg">
                     <LocationMap onSelect={handleMapSelect} />
                   </div>
-                  <p className="mt-3 text-sm text-gray-500">Click on the map to set location</p>
+                  <p className="mt-3 text-sm text-gray-500">
+                    Click on the map to set location
+                  </p>
                 </div>
               </div>
             )}
@@ -164,9 +160,9 @@ export default function AddFoundItemPage({ currentUser }) {
               className="w-full rounded-full border border-gray-200 px-4 py-3 pr-12 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
               style={{
                 backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='36' viewBox='0 0 24 24' width='36' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 1rem center',
-                backgroundSize: '2rem'
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 1rem center",
+                backgroundSize: "2rem",
               }}
             >
               <option value="Electronic">Electronic</option>
@@ -239,7 +235,6 @@ export default function AddFoundItemPage({ currentUser }) {
             </Button>
           </div>
         </form>
-        <Footer />
       </main>
     </div>
   );
