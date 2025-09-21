@@ -27,7 +27,14 @@ L.Icon.Default.mergeOptions({
 
 // Simple custom markers for items
 const createItemIcon = (status) => {
-  const color = status === "Lost" ? "#E66240" : "#7FD96C";
+  const color =
+    status === "Lost"
+      ? getComputedStyle(document.documentElement).getPropertyValue(
+          "--color-primary"
+        ) || "#E66240"
+      : getComputedStyle(document.documentElement).getPropertyValue(
+          "--color-success"
+        ) || "#7FD96C";
   return L.divIcon({
     className: "item-marker",
     html: `<div style="background: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
@@ -100,7 +107,14 @@ export default function LocationMap({
                     borderRadius: "12px",
                     backgroundColor:
                       item.status === "Lost" ? "#FEE2E2" : "#D1FAE5",
-                    color: item.status === "Lost" ? "#E66240" : "#7FD96C",
+                    color:
+                      item.status === "Lost"
+                        ? getComputedStyle(
+                            document.documentElement
+                          ).getPropertyValue("--color-primary") || "#E66240"
+                        : getComputedStyle(
+                            document.documentElement
+                          ).getPropertyValue("--color-success") || "#7FD96C",
                   }}
                 >
                   {item.status}

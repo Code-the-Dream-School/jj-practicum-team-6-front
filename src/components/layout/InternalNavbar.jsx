@@ -19,16 +19,16 @@ const InternalNavbar = () => {
           to="/items/new/lost"
           className="flex items-center gap-2 font-semibold whitespace-nowrap"
         >
-          <FaPlusCircle className="text-[#E66240] text-xl" />
-          <span className="text-[#E66240]">Add lost item</span>
+          <FaPlusCircle className="text-primary text-xl" />
+          <span className="text-primary">Add lost item</span>
         </Link>
 
         <Link
           to="/items/new/found"
           className="flex items-center gap-2 font-semibold whitespace-nowrap"
         >
-          <FaPlusCircle className="text-[#7FD96C] text-xl" />
-          <span className="text-[#7FD96C]">Add found item</span>
+          <FaPlusCircle className="text-success text-xl" />
+          <span className="text-success">Add found item</span>
         </Link>
       </nav>
 

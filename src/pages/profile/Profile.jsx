@@ -148,7 +148,7 @@ export default function Profile() {
               </div>
               <button
                 onClick={handleSave}
-                className="bg-[#E66240] hover:bg-[#1E1E1E] text-white px-6 py-2 rounded-full font-medium transition-colors shadow-md mt-2"
+                className="bg-primary hover:bg-[#1E1E1E] text-white px-6 py-2 rounded-full font-medium transition-colors shadow-md mt-2"
               >
                 Save
               </button>
@@ -165,7 +165,7 @@ export default function Profile() {
               </div>
               <button
                 onClick={() => setIsEditing(true)}
-                className="bg-[#E66240] hover:bg-[#1E1E1E] text-white px-6 py-2 rounded-full font-medium transition-colors shadow-md mt-2"
+                className="bg-primary hover:bg-[#1E1E1E] text-white px-6 py-2 rounded-full font-medium transition-colors shadow-md mt-2"
               >
                 <span className="font-body">Edit</span>
               </button>

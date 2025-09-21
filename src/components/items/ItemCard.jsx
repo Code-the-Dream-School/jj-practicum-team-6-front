@@ -3,7 +3,20 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 
 export default function ItemCard({ item, currentUserId }) {
   const navigate = useNavigate();
-  const isOwner = item.userId === currentUserId;
+
+  function getUserFromStorage() {
+    try {
+      return JSON.parse(localStorage.getItem("user")) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  const storageUser = getUserFromStorage();
+  const effectiveUserId =
+    currentUserId || storageUser?.id || storageUser?.userId || null;
+  const isOwner =
+    effectiveUserId && Number(item.userId) === Number(effectiveUserId);
 
   const handleEdit = () => {
     navigate(`/items/edit/${item.id}`);
@@ -22,8 +35,8 @@ export default function ItemCard({ item, currentUserId }) {
         <span
           className={`text-xs px-2 py-1 rounded-full font-semibold ${
             item.status === "Lost"
-              ? "bg-[#FEE2E2] text-[#E66240]"
-              : "bg-[#D1FAE5] text-[#7FD96C]"
+              ? "bg-red-50 text-primary"
+              : "bg-green-50 text-success"
           }`}
         >
           {item.status}

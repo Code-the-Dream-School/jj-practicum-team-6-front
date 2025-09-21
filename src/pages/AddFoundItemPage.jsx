@@ -3,6 +3,7 @@ import { FaMapMarkerAlt, FaImage, FaUpload } from "react-icons/fa";
 import Input from "../components/ui/Input.jsx";
 import LocationMap from "../components/LocationMap.jsx";
 import Button from "../components/ui/Button.jsx";
+import categories from "../util/categories";
 
 export default function AddFoundItemPage({ currentUser }) {
   const [showMap, setShowMap] = useState(false);
@@ -11,7 +12,7 @@ export default function AddFoundItemPage({ currentUser }) {
     description: "",
     location: "",
     date: "",
-    category: "Electronic",
+    category: categories[0] || "Other",
     tags: "",
     photos: [],
   });
@@ -165,11 +166,11 @@ export default function AddFoundItemPage({ currentUser }) {
                 backgroundSize: "2rem",
               }}
             >
-              <option value="Electronic">Electronic</option>
-              <option value="Clothing">Clothing</option>
-              <option value="Document">Document</option>
-              <option value="Accessory">Accessory</option>
-              <option value="Other">Other</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
           {/* Photos */}

@@ -5,6 +5,7 @@ import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import Profile from "./pages/profile/Profile";
 import EditItem from "./pages/items/EditItem";
+import ItemDetail from "./pages/items/ItemDetail";
 import ItemsList from "./pages/ItemsList";
 import AddLostItemPage from "./pages/AddLostItemPage";
 import AddFoundItemPage from "./pages/AddFoundItemPage";
@@ -14,6 +15,7 @@ import MessagesPage from "./pages/MessagesPage";
 import NotFound from "./pages/NotFound";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 
 import "./index.css";
 
@@ -22,6 +24,7 @@ function App() {
   const hideHeader = ["/signin", "/signup"].includes(location.pathname);
   return (
     <div className="min-h-screen flex flex-col">
+      <ScrollToTop />
       {!hideHeader && <Header />}
       <main className="flex-1">
         <Routes>
@@ -30,11 +33,11 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/items/list" element={<ItemsList />} />
+          <Route path="/items/:id" element={<ItemDetail />} />
           <Route path="/items/edit/:id" element={<EditItem />} />
           <Route path="/items/new/lost" element={<AddLostItemPage />} />
           <Route path="/items/new/found" element={<AddFoundItemPage />} />
           <Route path="/threads" element={<MessagesPage />} />
-          <Route path="/messages" element={<MessagesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

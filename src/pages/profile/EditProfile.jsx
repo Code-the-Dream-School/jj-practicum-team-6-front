@@ -41,7 +41,7 @@ function EditProfile() {
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full bg-[#F3F3F3] px-4 py-2 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#7FD96C]"
+            className="w-full bg-[#F3F3F3] px-4 py-2 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-success"
           />
           {errors.name && <p>{errors.name}</p>}
         </div>
@@ -54,7 +54,7 @@ function EditProfile() {
             value={form.email}
             onChange={handleChange}
             autoComplete="email"
-            className="w-full bg-[#F3F3F3] px-4 py-2 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#7FD96C]"
+            className="w-full bg-[#F3F3F3] px-4 py-2 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-success"
           />
           {errors.email && <p>{errors.email}</p>}
         </div>
@@ -86,7 +86,7 @@ function EditProfile() {
         <div>
           <button
             type="submit"
-            className="bg-[#E66240] text-white px-4 py-2 rounded-[16px]"
+            className="bg-primary text-white px-4 py-2 rounded-[16px]"
           >
             Save
           </button>
