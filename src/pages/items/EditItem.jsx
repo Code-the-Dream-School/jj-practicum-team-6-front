@@ -112,7 +112,7 @@ export default function EditItemPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="bg-[#7FD96C] text-white px-4 py-2 rounded hover:bg-[#69c359]"
+            className="bg-success text-white px-4 py-2 rounded hover:bg-[#69c359]"
           >
             Save Changes
           </button>

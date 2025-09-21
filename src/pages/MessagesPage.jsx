@@ -193,7 +193,7 @@ export default function MessagesPage() {
                   {activeThread.participant?.lastName}
                 </div>
                 <button
-                  className="ml-auto bg-[#E66240] hover:bg-[#d3542f] text-white px-4 py-2 rounded-full font-semibold transition-colors flex items-center gap-2"
+                  className="ml-auto bg-primary hover:bg-[#d14d2a] text-white px-4 py-2 rounded-full font-semibold transition-colors flex items-center gap-2"
                   onClick={() => setShowReportModal(true)}
                   type="button"
                   title="Report"

@@ -38,7 +38,7 @@ export default function ReportModal({
             />
             <button
               type="submit"
-              className="bg-[#E66240] hover:bg-[#d3542f] text-white px-6 py-2.5 rounded-full font-semibold self-end text-base shadow"
+              className="bg-primary hover:bg-[#d14d2a] text-white px-6 py-2.5 rounded-full font-semibold self-end text-base shadow"
             >
               Submit Report
             </button>
