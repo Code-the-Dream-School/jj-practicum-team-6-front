@@ -12,7 +12,6 @@ import InternalNavbar from "./InternalNavbar";
 //   FaUpload,
 // } from "react-icons/fa";
 
-
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -71,7 +70,7 @@ const Header = () => {
         {/* Navigation Section - Center (Only show on landing page) */}
         {isLandingPage ? (
           <nav className="hidden lg:flex justify-center">
-            <div className="relative flex items-center bg-gray-100 rounded-full p-1">
+            <div className="relative flex items-center bg-gray-100 rounded-full">
               {/* Sliding background pill with orange border */}
               <div
                 className="absolute bg-white rounded-full shadow-sm transition-all duration-300 ease-in-out h-full border-2 border-primary"
@@ -108,43 +107,33 @@ const Header = () => {
               ))}
             </div>
           </nav>
-        ) :(
+        ) : (
           <>
+            {/* For non-landing pages, show current page title in center */}
 
-          {/* For non-landing pages, show current page title in center */}
-
- <div className="hidden lg:flex justify-center">
-            <span className="font-medium text-gray600">
-              {/* {location.pathname === "/signin" && "Sign In"}
-              {location.pathname === "/signup" && "Sign Up"} 
-              {location.pathname === "/profile" && "Profile"}
-              {location.pathname === "/items/list" && "Items"}
-              {location.pathname.includes("/items/edit") && "Edit Item"}
-              {location.pathname.includes("/profile/edit") && "Edit Profile"} */}
-             </span>
-          </div>
+            <div className="hidden lg:flex justify-center"></div>
           </>
         )}
         {/* Auth Section - Right */}
-    <div className="flex justify-end">
-      {isLandingPage ? (
+        <div className="flex justify-end">
+          {isLandingPage ? (
             <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="small"
-              onClick={() => handleAuthClick("signin")}
-            >
-              Sign in
-            </Button>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={() => handleAuthClick("signup")}
-            >
-              Sign up
-            </Button>
-          </div> 
-           ) : localStorage.getItem("token") ? (
+              <Button
+                variant="outline"
+                size="small"
+                onClick={() => handleAuthClick("signin")}
+              >
+                Sign in
+              </Button>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => handleAuthClick("signup")}
+              >
+                Sign up
+              </Button>
+            </div>
+          ) : localStorage.getItem("token") ? (
             <InternalNavbar />
           ) : (
             <div className="flex items-center gap-4">
@@ -163,11 +152,10 @@ const Header = () => {
                 Sign up
               </Button>
             </div>
-       
-            )}
-          </div>
+          )}
+        </div>
       </div>
-      </header>
+    </header>
   );
 };
 

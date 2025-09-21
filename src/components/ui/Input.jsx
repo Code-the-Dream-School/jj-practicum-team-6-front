@@ -1,34 +1,22 @@
-export default function Input({
-  id,
-  name,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  required,
-  className = "",
-  rightIcon = null,
-  error, //adding the error prop
-}) {
+import React from "react";
+
+const baseClasses =
+  "w-full h-full rounded-full border border-gray-200 px-0 py-0 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:border-none hover:border-none flex items-center justify-center";
+
+const Input = React.forwardRef(function Input(
+  { className = "", type = "text", ...rest },
+  ref
+) {
+  const dateTweaks =
+    type === "date" ? " appearance-none [color-scheme:light] " : "";
   return (
-    <div className="relative">
-      <input
-        id={id || name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className={`input w-[300px] border-none focus:outline-none ${
-          error ? "border-red-500" : ""
-        }`}
-        aria-invalid={!!error}
-      />
-      {rightIcon ? (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-          {rightIcon}
-        </span>
-      ) : null}
-    </div>
+    <input
+      ref={ref}
+      type={type}
+      className={`${baseClasses}${dateTweaks} ${className}`.trim()}
+      {...rest}
+    />
   );
-}
+});
+
+export default Input;

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { getAllData } from "../util/index";
 import HeroSection from "../components/layout/HeroSection";
 import LandingMapSection from "../components/layout/LandingMapSection";
-import Footer from "../components/layout/Footer";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Section from "../components/layout/Section";
 
@@ -32,7 +31,7 @@ const LandingPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center">
         <LoadingSpinner size="large" text="Loading..." />
       </div>
     );
@@ -78,8 +77,6 @@ const LandingPage = () => {
       <Section id="contacts" title="Contacts Section">
         Contact information will go here.
       </Section>
-
-      <Footer />
     </>
   );
 };
