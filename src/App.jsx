@@ -3,6 +3,8 @@ import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { getAllData } from "./util/index";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
+import ForgotPasswordPage from "./pages/ForgotPassword";
+import ResetPasswordPage from "./pages/ResetPassword";
 import Profile from "./pages/profile/Profile";
 import EditItem from "./pages/items/EditItem";
 import ItemDetail from "./pages/items/ItemDetail";
@@ -31,6 +33,10 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage/>} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          
+          {/* App pages */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/items/list" element={<ItemsList />} />
           <Route path="/items/:id" element={<ItemDetail />} />
