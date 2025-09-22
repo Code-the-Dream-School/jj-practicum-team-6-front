@@ -5,7 +5,7 @@ import LocationMap from "../components/LocationMap.jsx";
 import Button from "../components/ui/Button.jsx";
 import categories from "../util/categories";
 
-export default function AddLostItemPage({ currentUser }) {
+export default function AddFoundItemPage({ currentUser }) {
   const [showMap, setShowMap] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -59,7 +59,7 @@ export default function AddLostItemPage({ currentUser }) {
     <div className="flex flex-col items-center">
       <main className="w-full">
         <h1 className="text-center font-display text-4xl font-black mt-10 mb-8">
-          Add Lost Item
+          Add Found Item
         </h1>
         <form
           onSubmit={onSubmit}
@@ -95,7 +95,7 @@ export default function AddLostItemPage({ currentUser }) {
           <div className="flex gap-4 mb-4 items-end">
             <div className="flex-1">
               <label className="block font-semibold mb-2">
-                Location Where Lost *
+                Location Where Found *
               </label>
               <Input
                 name="location"
@@ -135,7 +135,7 @@ export default function AddLostItemPage({ currentUser }) {
               </div>
             )}
             <div className="flex-1">
-              <label className="block font-semibold mb-2">Date Lost</label>
+              <label className="block font-semibold mb-2">Date Found</label>
               <div className="relative">
                 <Input
                   ref={dateRef}

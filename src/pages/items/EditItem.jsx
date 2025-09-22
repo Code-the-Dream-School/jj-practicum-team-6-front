@@ -53,7 +53,7 @@ export default function EditItemPage() {
   if (!itemData) return <p>Loading...</p>;
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
+    <div className="max-w-xl mx-auto p-6 rounded shadow">
       <h2 className="text-2xl font-semibold mb-4">Edit Item</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -112,7 +112,7 @@ export default function EditItemPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="bg-[#7FD96C] text-white px-4 py-2 rounded hover:bg-[#69c359]"
+            className="bg-success text-white px-4 py-2 rounded hover:bg-[#69c359]"
           >
             Save Changes
           </button>

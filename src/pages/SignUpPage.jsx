@@ -51,6 +51,17 @@ export default function SignUpPage() {
         zipCode: form.zipcode,
         phoneNumber: form.phone,
       });
+      // Save user data to localStorage for profile page
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          zipcode: form.zipcode,
+          phone: form.phone,
+        })
+      );
       nav("/signin");
     } catch (err) {
       setApiError(err.message || "Something went wrong!");
@@ -60,18 +71,18 @@ export default function SignUpPage() {
   }
 
   return (
-    <main className="min-h-[80vh] flex flex-col items-center px-4 pt-12 md:pt-16 bg-white">
+    <main className="flex flex-col items-center px-4 pt-12 md:pt-16">
       <h1 className="text-center mt-6 mb-10 font-['Merriweather'] text-5xl md:text-6xl font-bold">
         Sign up to Retrieve
       </h1>
 
       <form
         onSubmit={onSubmit}
-        className="border border-gray-200 p-6 rounded-[14px] shadow-[0_10px_15px_-3px_rgba(0,0,0,.1),0_4px_6px_-4px_rgba(0,0,0,.1)] bg-white w-full max-w-[520px]"
+        className="border border-gray-200 p-6 rounded-[14px] shadow-[0_10px_15px_-3px_rgba(0,0,0,.1),0_4px_6px_-4px_rgba(0,0,0,.1)] bg-white w-full max-w-[520px] mb-16"
       >
         <div className="text-center mb-6">
           <div className="text-2xl font-bold mb-8 font-['Merriweather']">
-            Logo
+            Retrieve
           </div>
           <p className="text-sm text-gray-700 mb-10">
             Have an account?{" "}
@@ -90,7 +101,7 @@ export default function SignUpPage() {
               onChange={onChange}
               autoComplete="given-name"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none focus:border-none hover:border-none"
             />
             {errors.firstName ? (
               <span className="absolute right-4 py-1 text-xs text-red-600">
@@ -106,7 +117,7 @@ export default function SignUpPage() {
               onChange={onChange}
               autoComplete="family-name"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none"
             />
             {errors.lastName ? (
               <span className="absolute right-4 py-1 text-xs text-red-600">
@@ -123,7 +134,7 @@ export default function SignUpPage() {
               onChange={onChange}
               autoComplete="email"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none"
             />
             {errors.email ? (
               <span className="absolute right-4 py-1 text-xs text-red-600">
@@ -140,7 +151,7 @@ export default function SignUpPage() {
               onChange={onChange}
               autoComplete="new-password"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none"
             />
             {errors.password ? (
               <span className="absolute right-4 py-1 text-xs text-red-600">
@@ -157,7 +168,7 @@ export default function SignUpPage() {
               onChange={onChange}
               autoComplete="new-password"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none"
             />
             {errors.confirmPassword ? (
               <span className="absolute right-4 py-1 text-xs text-red-600">
@@ -173,7 +184,7 @@ export default function SignUpPage() {
               onChange={onChange}
               autoComplete="postal-code"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none"
             />
           </div>
           <div className="relative flex h-[50px] rounded-[25px] border border-[#E8E8E9] bg-white px-5 py-3">
@@ -184,7 +195,7 @@ export default function SignUpPage() {
               onChange={onChange}
               autoComplete="tel"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none"
             />
           </div>
         </div>

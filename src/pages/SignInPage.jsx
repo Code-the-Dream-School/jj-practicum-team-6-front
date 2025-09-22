@@ -31,7 +31,7 @@ export default function SignInPage() {
     setLoading(true);
     try {
       await signIn(form);
-      nav("/");
+      nav("/items/list");
     } catch (err) {
       setApiError(err.message || "Invalid credentials");
     } finally {
@@ -40,18 +40,18 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="min-h-[80vh] flex flex-col items-center px-4 pt-12 md:pt-16 bg-white">
+    <main className="flex flex-col items-center px-4 pt-12 md:pt-16">
       <h1 className="text-center mt-6 mb-10 font-['Merriweather'] text-5xl md:text-6xl font-bold">
         Sign in to Retrieve
       </h1>
 
       <form
         onSubmit={onSubmit}
-        className="border border-gray-200 p-6 rounded-[14px] shadow-[0_10px_15px_-3px_rgba(0,0,0,.1),0_4px_6px_-4px_rgba(0,0,0,.1)] bg-white w-full max-w-[520px]"
+        className="border border-gray-200 p-6 rounded-[14px] shadow-[0_10px_15px_-3px_rgba(0,0,0,.1),0_4px_6px_-4px_rgba(0,0,0,.1)] bg-white w-full max-w-[520px] mb-16"
       >
         <div className="text-center mb-6">
           <div className="text-2xl font-bold mb-8 font-['Merriweather']">
-            Logo
+            Retrieve
           </div>
           <p className="text-sm text-gray-700 mb-10">
             Don’t have an account?{" "}
@@ -71,7 +71,7 @@ export default function SignInPage() {
               onChange={onChange}
               autoComplete="email"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none focus:border-none hover:border-none"
             />
             {errors.email ? (
               <span className="absolute right-4 py-1 text-xs text-red-600">
@@ -89,7 +89,7 @@ export default function SignInPage() {
               onChange={onChange}
               autoComplete="current-password"
               variant="frameless"
-              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:outline-none"
+              className="h-full w-full text-sm placeholder-gray-400 pt-[2px] border-none focus:ring-0 focus:outline-none"
             />
             {errors.password ? (
               <span className="absolute right-4 py-1 text-xs text-red-600">

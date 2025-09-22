@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaList, FaMap, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import {
+  FaList,
+  FaMap,
+  FaEdit,
+  FaTrash,
+  FaMapMarkerAlt,
+  FaRegCalendarAlt,
+} from "react-icons/fa";
 import LocationMap from "../components/LocationMap";
 import { mockItems, filterItems } from "../util/itemsData";
 
@@ -15,9 +22,19 @@ export default function ItemsList() {
   const [viewMode, setViewMode] = useState("list");
 
   const itemsPerPage = 8;
-  const currentUserId = 123;
 
-  // Apply filters whenever search, filter, or sort changes
+  function getUserFromStorage() {
+    try {
+      const data = JSON.parse(localStorage.getItem("user"));
+      return data || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  const storageUser = getUserFromStorage();
+  const currentUserId = storageUser?.id || storageUser?.userId || null;
+
   useEffect(() => {
     const filtered = filterItems(allItems, { search, status: filter, sort });
     setFilteredItems(filtered);
@@ -43,7 +60,7 @@ export default function ItemsList() {
   );
 
   return (
-    <div className="min-h-screen bg-white">
+    <div>
       {/* Main Container */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header Section */}
@@ -51,12 +68,6 @@ export default function ItemsList() {
           <h1 className="font-display text-4xl font-bold text-ink">
             List of Lost/Found Items
           </h1>
-          <button
-            onClick={() => navigate("/items/new")}
-            className="flex items-center gap-2 bg-success text-white font-medium px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
-          >
-            <FaPlus size={16} /> Add New Item
-          </button>
         </div>
 
         {/* View Toggle */}
@@ -86,7 +97,7 @@ export default function ItemsList() {
         </div>
 
         {/* Search and Controls */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+        <div className="flex flex-col lg:flex-row gap-4 mb-8 items-center">
           {/* Search Input */}
           <div className="flex-1">
             <input
@@ -133,7 +144,7 @@ export default function ItemsList() {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="relative">
+          <div className="relative self-stretch flex items-center">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
@@ -177,8 +188,8 @@ export default function ItemsList() {
                       <span
                         className={`inline-block text-xs px-3 py-1 rounded-full font-semibold ${
                           item.status === "Lost"
-                            ? "bg-red-50 text-primary border border-red-100"
-                            : "bg-green-50 text-success border border-green-100"
+                            ? "bg-primary text-white"
+                            : "bg-success text-white"
                         }`}
                       >
                         {item.status}
@@ -187,17 +198,23 @@ export default function ItemsList() {
 
                     {/* Image Placeholder */}
                     <div className="w-full h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-gray-400 overflow-hidden">
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="w-full h-full object-cover rounded-xl"
-                        />
-                      ) : (
-                        <div className="text-4xl">
-                          {item.status === "Lost" ? "📱" : "🎒"}
-                        </div>
-                      )}
+                      <button
+                        onClick={() => navigate(`/items/${item.id}`)}
+                        className="w-full h-full p-0 m-0 text-left rounded-xl overflow-hidden"
+                        aria-label={`Open ${item.title}`}
+                      >
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        ) : (
+                          <div className="text-4xl w-full h-full flex items-center justify-center">
+                            {item.status === "Lost" ? "📱" : "🎒"}
+                          </div>
+                        )}
+                      </button>
                     </div>
 
                     {/* Item Details */}
@@ -205,40 +222,37 @@ export default function ItemsList() {
                       <h3 className="font-display text-lg font-semibold text-ink leading-tight">
                         {item.title}
                       </h3>
-                      <p className="font-body text-sm text-gray600 flex items-center gap-1">
-                        <span>📍</span>
-                        {item.location}
+                      <p className="font-body text-sm text-gray600 flex items-center gap-2">
+                        <FaMapMarkerAlt className="text-gray-400" />
+                        <span>{item.location}</span>
                       </p>
-                      <p className="font-body text-sm text-gray-500 flex items-center gap-1">
-                        <span>📅</span>
-                        {item.date}
+                      <p className="font-body text-sm text-gray-500 flex items-center gap-2">
+                        <FaRegCalendarAlt className="text-gray-400" />
+                        <span>{item.date}</span>
                       </p>
                     </div>
 
-                    {/* Action Buttons for Owner: needs more work */}
-                    {item.userId === currentUserId && (
-                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                        <button className="font-body text-sm text-gray600 hover:text-ink transition-colors">
-                          More →
-                        </button>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="text-blue-600 hover:text-blue-700 transition-colors"
-                            title="Edit item"
-                          >
-                            <FaEdit size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item)}
-                            className="text-red-600 hover:text-red-700 transition-colors"
-                            title="Delete item"
-                          >
-                            <FaTrash size={14} />
-                          </button>
+                    {currentUserId &&
+                      Number(item.userId) === Number(currentUserId) && (
+                        <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className="text-blue-600 hover:text-blue-700 transition-colors"
+                              title="Edit item"
+                            >
+                              <FaEdit size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item)}
+                              className="text-red-600 hover:text-red-700 transition-colors"
+                              title="Delete item"
+                            >
+                              <FaTrash size={14} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 ))
               ) : (
