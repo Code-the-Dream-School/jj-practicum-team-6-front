@@ -103,13 +103,6 @@ export default function SignInPage() {
           <p className="mb-3 text-sm text-red-600">{apiError}</p>
         ) : null}
         <div className="mt-4">
-          {/* <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-[50px] rounded-[25px] bg-black !text-white hover:opacity-90 flex items-center justify-center"
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button> */}
           <Button
             type="submit"
             disabled={loading}

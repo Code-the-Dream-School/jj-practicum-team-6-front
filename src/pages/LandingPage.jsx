@@ -39,22 +39,8 @@ const LandingPage = () => {
 
   return (
     <>
-      {/* Backend Status FOR DEBUGGING ONLY */}
-      {/* {message && (
-        <div className={`py-2 px-4 text-center border-b border-gray-200 ${
-          error ? "bg-red-50" : "bg-green-50"
-        }`}>
-          <p className={`m-0 text-sm font-body ${
-            error ? "text-red-600" : "text-success"
-          }`}>
-            Backend Status: {message}
-          </p>
-        </div>
-      )} */}
-
       <HeroSection />
 
-      {/* NEW: Recently Added Map Section */}
       <LandingMapSection />
 
       <Section id="about" title="About Us Section">

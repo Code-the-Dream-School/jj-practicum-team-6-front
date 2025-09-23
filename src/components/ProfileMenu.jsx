@@ -1,10 +1,25 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { FaUserCircle } from "react-icons/fa";
+import { AuthContext } from "../contexts/AuthContext";
+import { logout as authLogout } from "../services/authService";
 
 export default function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
-  const userName = localStorage.getItem("userName") || "User";
+  const { currentUser } = useContext(AuthContext);
+  const userName =
+    currentUser?.firstName ||
+    currentUser?.name ||
+    (() => {
+      try {
+        const raw = localStorage.getItem("user");
+        if (!raw) return "User";
+        const u = JSON.parse(raw);
+        return u?.firstName || u?.name || "User";
+      } catch (e) {
+        return "User";
+      }
+    })();
 
   const toggleMenu = () => setIsOpen((prev) => !prev);
   useEffect(() => {
@@ -17,7 +32,7 @@ export default function ProfileMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    authLogout();
     window.location.href = "/signin";
   };
   return (

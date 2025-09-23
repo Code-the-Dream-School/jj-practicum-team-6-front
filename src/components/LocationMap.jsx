@@ -7,25 +7,22 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ItemCard from "./items/ItemCard";
 import L from "leaflet";
 
-// Fixing the default method of markers by updating the URLs of the default marker images
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  // URL for the standard (non-retina) marker icon
   iconUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
 
-  // URL for the retina (high-DPI) marker icon
   iconRetinaUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
 
-  // URL for the marker's shadow image (the shadow that appears below the marker)
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Simple custom markers for items
 const createItemIcon = (status) => {
   const color =
     status === "Lost"
@@ -43,18 +40,27 @@ const createItemIcon = (status) => {
   });
 };
 
-export default function LocationMap({
-  onSelect,
-  items = [], // ADD: support for displaying items
-  mode = "select", // ADD: mode prop ("select" or "display")
-}) {
+export default function LocationMap({ onSelect, items = [], mode = "select" }) {
   const [position, setPosition] = useState([40.7128, -74.006]);
+
+  const validItems = Array.isArray(items)
+    ? items.filter(
+        (it) =>
+          typeof it?.lat === "number" &&
+          !Number.isNaN(it.lat) &&
+          typeof it?.lng === "number" &&
+          !Number.isNaN(it.lng)
+      )
+    : [];
+  const initialCenter =
+    mode === "display" && validItems.length > 0
+      ? [validItems[0].lat, validItems[0].lng]
+      : position;
 
   function LocationMarker() {
     useMapEvents({
       click(e) {
         if (mode === "select") {
-          // Only allow selection in select mode -- This code requires advice on functionaloty
           setPosition([e.latlng.lat, e.latlng.lng]);
           if (onSelect) onSelect(e.latlng);
         }
@@ -64,65 +70,85 @@ export default function LocationMap({
   }
 
   return (
-    <MapContainer
-      center={position}
-      zoom={13}
-      style={{ height: "300px", width: "100%" }}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap contributors"
-      />
-      <LocationMarker />
+    <>
+      <style>{`.leaflet-item-map .leaflet-control-container, .leaflet-item-map .leaflet-top, .leaflet-item-map .leaflet-bottom { z-index: 10 !important; }`}</style>
+      <MapContainer
+        className="leaflet-item-map"
+        center={initialCenter}
+        zoom={13}
+        style={{ height: "300px", width: "100%" }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
+        <LocationMarker />
 
-      {/* ADD: Display items when in display mode */}
-      {mode === "display" &&
-        items.map((item) => (
-          <Marker
-            key={item.id}
-            position={[item.lat, item.lng]}
-            icon={createItemIcon(item.status)}
-          >
-            <Popup>
-              <div style={{ minWidth: "200px" }}>
-                <h4 style={{ margin: "0 0 8px 0", fontWeight: "bold" }}>
-                  {item.title}
-                </h4>
-                <p style={{ margin: "0 0 4px 0", fontSize: "14px" }}>
-                  {item.location}
-                </p>
-                <p
-                  style={{
-                    margin: "0 0 8px 0",
-                    fontSize: "12px",
-                    color: "#666",
-                  }}
-                >
-                  {item.date}
-                </p>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    padding: "4px 8px",
-                    borderRadius: "12px",
-                    backgroundColor:
-                      item.status === "Lost" ? "#FEE2E2" : "#D1FAE5",
-                    color:
-                      item.status === "Lost"
-                        ? getComputedStyle(
-                            document.documentElement
-                          ).getPropertyValue("--color-primary") || "#E66240"
-                        : getComputedStyle(
-                            document.documentElement
-                          ).getPropertyValue("--color-success") || "#7FD96C",
-                  }}
-                >
-                  {item.status}
-                </span>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-    </MapContainer>
+        {mode === "display" &&
+          validItems.map((item) => (
+            <Marker
+              key={item.id}
+              position={[item.lat, item.lng]}
+              icon={createItemIcon(item.status)}
+            >
+              <Popup>
+                <div style={{ minWidth: 260 }}>
+                  <div style={{ padding: 8 }}>
+                    <ItemCard item={item} readOnly={true} imageLoading="lazy" />
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+      </MapContainer>
+    </>
+  );
+}
+
+function MapPopupContent({ item }) {
+  const navigate = useNavigate();
+  return (
+    <div
+      onClick={() => navigate(`/items/${item.id}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") navigate(`/items/${item.id}`);
+      }}
+      style={{ minWidth: 220, cursor: "pointer" }}
+    >
+      {item.imageUrl && (
+        <div
+          style={{
+            width: "100%",
+            height: 120,
+            overflow: "hidden",
+            marginBottom: 8,
+          }}
+        >
+          <img
+            src={item.imageUrl}
+            alt={item.title}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      )}
+      <h4 style={{ margin: "0 0 6px 0", fontWeight: "bold" }}>{item.title}</h4>
+      <p style={{ margin: "0 0 6px 0", fontSize: 13 }}>{item.location}</p>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: "#666" }}>{item.date}</span>
+        <span
+          style={{
+            marginLeft: "auto",
+            fontSize: 12,
+            padding: "4px 8px",
+            borderRadius: 12,
+            backgroundColor: item.status === "Lost" ? "#FEE2E2" : "#D1FAE5",
+          }}
+        >
+          {item.status}
+        </span>
+      </div>
+    </div>
   );
 }

@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LocationMap from "../../components/LocationMap";
-import { mockItems } from "../../util/itemsData";
+import ItemGallery from "../../components/items/ItemGallery";
+import CommentsSection from "../../components/items/CommentsSection";
+import Modal from "../../components/Modal";
+import itemsService from "../../services/itemsService";
+import messagesService from "../../services/messagesService";
+import commentsService from "../../services/commentsService";
+import seenService from "../../services/seenService";
 import {
   FaMapMarkerAlt,
   FaRegCalendarAlt,
@@ -11,44 +17,165 @@ import {
   FaTrash,
 } from "react-icons/fa";
 
+import { AuthContext } from "../../contexts/AuthContext";
+
 export default function ItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const item = mockItems.find((i) => String(i.id) === String(id));
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  function getUserFromStorage() {
+  const { currentUser } = useContext(AuthContext);
+  const storageUser = currentUser || {};
+
+  const owner =
+    item?.owner ||
+    item?.user ||
+    (item?.userId
+      ? storageUser &&
+        (String(storageUser.id) === String(item.userId) ||
+          String(storageUser.userId) === String(item.userId))
+        ? storageUser
+        : { id: item.userId, firstName: null, lastName: null }
+      : null) ||
+    null;
+
+  const resolveUserId = () => {
+    const uid = storageUser?.id || storageUser?.userId || null;
+    if (uid) return uid;
     try {
-      const data = JSON.parse(localStorage.getItem("user"));
-      return data || {};
-    } catch {
-      return {};
+      const raw = localStorage.getItem("user");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.id || parsed?.userId || null;
+    } catch (e) {
+      return null;
     }
-  }
+  };
 
-  const storageUser = getUserFromStorage();
-
-  const [mainIndex, setMainIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      author: "Emily Carter",
-      text: "I think I saw your phone — you might've left it on the bench.",
-      createdAt: Date.now() - 1000 * 60 * 60 * 24,
-    },
-    {
-      id: 2,
-      author: "Jason Miller",
-      text: "They usually keep lost items in their Lost & Found room.",
-      createdAt: Date.now() - 1000 * 60 * 60 * 2,
-    },
-  ]);
+  const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
-  const baseSeen = typeof item.seen === "number" ? item.seen : 8;
+  const baseSeen = typeof item?.seen === "number" ? item.seen : 8;
   const [iHaveSeen, setIHaveSeen] = useState(false);
-  const seenCount = baseSeen + (iHaveSeen ? 1 : 0);
+  const [seenMeta, setSeenMeta] = useState({});
+  const [seenList, setSeenList] = useState([]);
+  const [mySeenId, setMySeenId] = useState(null);
+  const seenCount = seenMeta?.count || seenList?.length || baseSeen;
   const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [creatingThread, setCreatingThread] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    itemsService
+      .getItem(id)
+      .then((data) => {
+        if (!mounted) return;
+        if (!data) return setItem(null);
+        const toStatusText = (s) => {
+          const x = (s || "").toString().toUpperCase();
+          if (x === "LOST") return "Lost";
+          if (x === "FOUND") return "Found";
+          if (x === "RESOLVED") return "Resolved";
+          return s || "Lost";
+        };
+        const normalized = {
+          ...data,
+          status: toStatusText(data.status),
+          imageUrl:
+            data.primaryPhotoUrl ||
+            (Array.isArray(data.photos) && data.photos.length
+              ? data.photos[0].url
+              : ""),
+          location: data.zipCode || data.location || "",
+          date: data.dateReported
+            ? new Date(data.dateReported).toLocaleDateString()
+            : data.createdAt
+              ? new Date(data.createdAt).toLocaleDateString()
+              : data.date || "",
+          userId: data.ownerId ?? data.userId,
+          lat: typeof data.latitude === "number" ? data.latitude : undefined,
+          lng: typeof data.longitude === "number" ? data.longitude : undefined,
+        };
+        setItem(normalized);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setItem(null);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!item?.id) return;
+    let mounted = true;
+    commentsService
+      .listComments(item.id, { limit: 50 })
+      .then(({ comments: list = [], meta = {} } = {}) => {
+        if (!mounted) return;
+        const ts = (v) => {
+          if (typeof v === "number") return v;
+          const t = Date.parse(v);
+          return Number.isFinite(t) ? t : 0;
+        };
+        const sorted = (list || []).sort(
+          (a, b) => ts(b.createdAt) - ts(a.createdAt)
+        );
+        setComments(sorted);
+      })
+      .catch((err) => {
+        console.warn("Failed to load comments", err);
+      });
+
+    seenService
+      .listSeen(item.id, { limit: 100 })
+      .then(({ seen = [], meta = {} } = {}) => {
+        if (!mounted) return;
+        const list = seen || [];
+        setSeenList(list);
+        setSeenMeta(meta || {});
+        try {
+          const uid = resolveUserId();
+          if (uid) {
+            const mine = list.find(
+              (m) =>
+                String(m.userId) === String(uid) ||
+                (m.user && String(m.user.id) === String(uid))
+            );
+            if (mine) {
+              setIHaveSeen(true);
+              setMySeenId(mine.id);
+            } else {
+              setIHaveSeen(false);
+              setMySeenId(null);
+            }
+          }
+        } catch (e) {}
+      })
+      .catch((err) => {
+        console.warn("Failed to load seen marks", err);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [item?.id]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <p className="text-gray-500">Loading item…</p>
+      </div>
+    );
+  }
   if (!item) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-12">
@@ -63,41 +190,163 @@ export default function ItemDetail() {
       ? [item.imageUrl]
       : [];
 
-  const mainImage = images[mainIndex] || null;
-
   const addComment = () => {
     if (!commentInput.trim()) return;
-    const next = {
-      id: Date.now(),
-      author: "You",
-      text: commentInput.trim(),
+    const body = commentInput.trim();
+    const temp = {
+      id: `temp-${Date.now()}`,
+      author:
+        storageUser && (storageUser.firstName || storageUser.lastName)
+          ? {
+              id: storageUser.id || storageUser.userId,
+              firstName: storageUser.firstName || storageUser.name || "You",
+              lastName: storageUser.lastName || "",
+              avatarUrl: storageUser.avatarUrl || null,
+            }
+          : "You",
+      body,
+      text: body,
       createdAt: Date.now(),
+      pending: true,
     };
-    setComments((s) => [next, ...s]);
+    setComments((s) => [temp, ...s]);
     setCommentInput("");
+    commentsService
+      .postComment(item.id, body)
+      .then((created) => {
+        setComments((s) => [created, ...s.filter((c) => c.id !== temp.id)]);
+      })
+      .catch((err) => {
+        console.error("postComment failed", err);
+        setComments((s) => s.filter((c) => c.id !== temp.id));
+      });
   };
 
-  const handleCommentKey = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      addComment();
-    }
-  };
+  // key handling moved into CommentsSection
 
-  function timeAgo(ts) {
-    const diff = Math.floor((Date.now() - ts) / 1000);
+  function timeAgo(tsInput) {
+    const ts = typeof tsInput === "number" ? tsInput : Date.parse(tsInput);
+    const base = Number.isFinite(ts) ? ts : Date.now();
+    const diff = Math.floor((Date.now() - base) / 1000);
     if (diff < 60) return `${diff}s ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
     return `${Math.floor(diff / 86400)}d ago`;
   }
-
   const deleteComment = (id) => {
+    const prev = comments;
     setComments((s) => s.filter((c) => c.id !== id));
+    commentsService.deleteComment(id).catch(() => setComments(prev));
   };
 
-  const toggleSeen = () => {
-    setIHaveSeen((v) => !v);
+  const toggleSeen = async () => {
+    const uid = resolveUserId();
+    if (!uid) {
+      setErrorMsg("Please sign in to mark seen");
+      return;
+    }
+
+    if (iHaveSeen && mySeenId) {
+      setIHaveSeen(false);
+      const prevMySeenId = mySeenId;
+      try {
+        await seenService.unmarkSeen(item.id, prevMySeenId);
+        setSeenList((s) => s.filter((x) => x.id !== prevMySeenId));
+        setMySeenId(null);
+      } catch (err) {
+        setIHaveSeen(true);
+        setMySeenId(prevMySeenId);
+        const msg =
+          err?.response?.data?.message ||
+          err.message ||
+          "Failed to unmark seen";
+        setErrorMsg(msg);
+      }
+    } else {
+      const prev = seenList;
+      const temp = {
+        id: `temp-${Date.now()}`,
+        userId: uid,
+        user: { id: uid },
+        createdAt: Date.now(),
+      };
+      setSeenList((s) => [temp, ...(s || [])]);
+      setIHaveSeen(true);
+      try {
+        const res = await seenService.markSeen(item.id);
+        const created = res?.data ?? res;
+        if (created) {
+          setSeenList((s) => [created, ...s.filter((m) => m.id !== temp.id)]);
+          setMySeenId(created.id);
+        } else {
+          const { seen = [], meta = {} } = await seenService.listSeen(item.id);
+          setSeenList(seen || []);
+          setSeenMeta(meta || {});
+          const mine = (seen || []).find(
+            (m) =>
+              String(m.userId) === String(uid) ||
+              (m.user && String(m.user.id) === String(uid))
+          );
+          if (mine) {
+            setIHaveSeen(true);
+            setMySeenId(mine.id);
+          }
+        }
+      } catch (err) {
+        console.error("markSeen error:", err);
+        try {
+          if (err && typeof err === "object") {
+            console.error("err keys:", Object.keys(err));
+            console.error("err json:", err);
+            if (err?.status) console.error("status:", err.status);
+            if (err?.error) console.error("error:", err.error);
+            if (err?.message) console.error("message:", err.message);
+            if (err?.data) console.error("data:", err.data);
+          }
+        } catch (e) {
+          console.error("failed to stringify error", e);
+        }
+        setSeenList(prev);
+        setIHaveSeen(false);
+        setMySeenId(null);
+        const serverErr = err?.response?.data || err || {};
+        if (
+          serverErr?.error?.code === "UNAUTHORIZED" ||
+          serverErr?.status === 401 ||
+          serverErr?.code === "UNAUTHORIZED"
+        ) {
+          setErrorMsg("Please sign in to mark this item as seen");
+          return;
+        }
+        if (
+          serverErr?.errorCode === "DUPLICATE" ||
+          serverErr?.code === "DUPLICATE"
+        ) {
+          seenService
+            .listSeen(item.id)
+            .then(({ seen = [], meta = {} } = {}) => {
+              setSeenList(seen || []);
+              setSeenMeta(meta || {});
+              const mine = (seen || []).find(
+                (m) =>
+                  String(m.userId) === String(uid) ||
+                  (m.user && String(m.user.id) === String(uid))
+              );
+              if (mine) {
+                setIHaveSeen(true);
+                setMySeenId(mine.id);
+              }
+            })
+            .catch(() => {});
+        } else {
+          const msg =
+            err?.response?.data?.message ||
+            err.message ||
+            "Failed to mark seen";
+          setErrorMsg(msg);
+        }
+      }
+    }
   };
 
   return (
@@ -105,159 +354,46 @@ export default function ItemDetail() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left: Image gallery */}
         <div className="lg:w-1/2">
-          <div className="w-full rounded-2xl overflow-hidden bg-gray-100">
-            {mainImage ? (
-              // click to open lightbox
-              <button
-                onClick={() => setLightboxOpen(true)}
-                className="w-full h-[420px] bg-gray-100 flex items-center justify-center focus:outline-none"
-                aria-label="Open image"
-              >
-                <img
-                  src={mainImage}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ) : (
-              <div className="w-full h-[420px] flex items-center justify-center text-6xl">
-                {item.status === "Lost" ? "\ud83d\udcf1" : "\ud83c\udf92"}
-              </div>
-            )}
-          </div>
-
-          {/* Thumbnails */}
-          <div className="flex gap-3 mt-4" role="list">
-            {images.length > 0 ? (
-              images.map((src, idx) => (
-                <button
-                  key={src + idx}
-                  onClick={() => setMainIndex(idx)}
-                  className={`w-20 h-20 rounded-md overflow-hidden border-2 ${idx === mainIndex ? "border-black" : "border-transparent"}`}
-                  aria-label={`Show image ${idx + 1}`}
-                >
-                  <img
-                    src={src}
-                    alt={`thumb-${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))
-            ) : (
-              <div className="text-gray-400">No images</div>
-            )}
-          </div>
-
-          {/* Lightbox */}
-          {lightboxOpen && mainImage && (
-            <div
-              className="fixed inset-0 z-[10050] bg-black/80 flex items-center justify-center"
-              role="dialog"
-              aria-modal="true"
-              onClick={() => setLightboxOpen(false)}
-            >
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="absolute top-6 right-6 text-white text-xl"
-                  onClick={() => setLightboxOpen(false)}
-                  aria-label="Close image"
-                >
-                  ✕
-                </button>
-                <img
-                  src={mainImage}
-                  alt={item.title}
-                  className="max-w-[95%] max-h-[85%] object-contain rounded"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Comments (moved to left column) */}
-          <div className="mt-6">
-            <h3 className="font-display text-xl font-semibold mb-2">
-              Comments:
-            </h3>
-            <div className="mb-4">
-              <textarea
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                onKeyDown={handleCommentKey}
-                placeholder="Write a comment"
-                className="w-full rounded-2xl border border-gray-200 p-4 min-h-[100px]"
-              />
-              <div className="mt-3 flex gap-3">
-                <button
-                  onClick={addComment}
-                  className="px-5 py-2 bg-black text-white rounded-full"
-                  aria-label="Add comment"
-                >
-                  Add comment
-                </button>
-              </div>
-            </div>
-            <div className="space-y-4">
-              {[...comments]
-                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-                .map((c) => (
-                  <div
-                    key={c.id}
-                    className="group relative flex items-start gap-3"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
-                      {c.author[0]}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold flex items-center justify-between">
-                        <div>
-                          {c.author}{" "}
-                          <span className="text-xs text-gray-400">
-                            · {timeAgo(c.createdAt || Date.now())}
-                          </span>
-                        </div>
-                        {c.author === "You" && (
-                          <button
-                            onClick={() => deleteComment(c.id)}
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 ml-2"
-                            aria-label="Delete comment"
-                          >
-                            <FaTrash />
-                          </button>
-                        )}
-                      </div>
-                      <div className="text-gray600">{c.text}</div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
+          <ItemGallery images={images} title={item.title} />
+          <CommentsSection
+            comments={comments}
+            commentInput={commentInput}
+            setCommentInput={setCommentInput}
+            onAddComment={addComment}
+            onDeleteComment={deleteComment}
+            timeAgo={timeAgo}
+            currentUser={storageUser}
+          />
         </div>
 
         {/* Right: Details */}
         <div className="lg:w-1/2">
           <div className="flex items-center gap-4 mb-4">
-            {storageUser.avatarUrl ? (
+            {owner && owner.avatarUrl ? (
               <img
-                src={storageUser.avatarUrl}
-                alt={storageUser.firstName || "User"}
+                src={owner.avatarUrl}
+                alt={owner.firstName || "User"}
                 className="w-12 h-12 rounded-full object-cover"
               />
             ) : (
               <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
-                {(storageUser.firstName || "U")[0]}
+                {owner && (owner.firstName || owner.name)
+                  ? (owner.firstName || owner.name)[0]
+                  : "U"}
               </div>
             )}
             <div>
               <div className="font-semibold">
-                {storageUser.firstName || storageUser.name || "User"}{" "}
-                {storageUser.lastName || "User"}
+                {(owner && (owner.firstName || owner.name)) || "User"}{" "}
+                {owner && owner.lastName ? owner.lastName : ""}
               </div>
               <div className="text-sm text-gray-500 flex items-center gap-3">
                 <span className="flex items-center gap-2">
                   <FaMapMarkerAlt className="text-gray-400" />
                   <span>
-                    {storageUser.city ||
-                      storageUser.zipcode ||
+                    {item.location ||
+                      (owner &&
+                        (owner.zipCode || owner.zipcode || owner.city)) ||
                       "Unknown location"}
                   </span>
                 </span>
@@ -292,8 +428,8 @@ export default function ItemDetail() {
                 items={[
                   {
                     ...item,
-                    lat: item.lat || 40.7128,
-                    lng: item.lng || -74.006,
+                    lat: typeof item.lat === "number" ? item.lat : undefined,
+                    lng: typeof item.lng === "number" ? item.lng : undefined,
                   },
                 ]}
               />
@@ -301,7 +437,6 @@ export default function ItemDetail() {
           </div>
 
           <div className="flex items-center gap-4 mb-8">
-            {/* Make both action buttons consistent size */}
             <div className="flex gap-3">
               <button
                 onClick={() => setChatModalOpen(true)}
@@ -325,7 +460,11 @@ export default function ItemDetail() {
                 </div>
               </button>
             </div>
-
+            {errorMsg && (
+              <div className="ml-auto text-sm rounded-lg bg-red-50 text-red-700 px-3 py-2 border border-red-200">
+                {errorMsg}
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <FaRegComment className="text-gray-400" />
               <span>{comments.length} comments</span>
@@ -335,46 +474,67 @@ export default function ItemDetail() {
       </div>
 
       {/* Chat Modal (overlays map controls) */}
-      {chatModalOpen && (
-        <div
-          className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/50"
-          onClick={() => setChatModalOpen(false)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <h3 className="font-semibold mb-2">Message the owner</h3>
-            <p className="text-sm text-gray-700 mb-4">
-              Send a short message to the owner to let them know you found this
-              item.
-            </p>
-            <textarea
-              className="w-full border rounded-lg p-3 mb-4"
-              placeholder={`Hi, I may have found your ${item.title}.`}
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setChatModalOpen(false)}
-                className="px-4 py-2 border rounded-full"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
+      <Modal
+        open={chatModalOpen}
+        onClose={() => setChatModalOpen(false)}
+        title="Message the owner"
+        footer={
+          <>
+            <button
+              onClick={() => setChatModalOpen(false)}
+              className="px-4 py-2 border rounded-full"
+            >
+              Close
+            </button>
+            <button
+              onClick={async () => {
+                if (!item?.id) return;
+                setCreatingThread(true);
+                try {
+                  const created = await messagesService.createThread({
+                    itemId: item.id,
+                  });
+                  const threadId =
+                    created?.id || created?.threadId || created?.data?.id;
+                  if (threadId && chatMessage.trim()) {
+                    try {
+                      await messagesService.postMessage(threadId, {
+                        body: chatMessage.trim(),
+                      });
+                    } catch (e) {}
+                  }
                   setChatModalOpen(false);
-                  navigate("/threads");
-                }}
-                className="px-4 py-2 bg-primary text-white rounded-full"
-              >
-                Start chat
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  setChatMessage("");
+                  if (threadId) {
+                    navigate(`/threads?tid=${encodeURIComponent(threadId)}`);
+                  } else {
+                    navigate("/threads");
+                  }
+                } catch (err) {
+                  setErrorMsg(err?.message || "Failed to start chat");
+                } finally {
+                  setCreatingThread(false);
+                }
+              }}
+              className="px-4 py-2 bg-primary text-white rounded-full disabled:opacity-60"
+              disabled={creatingThread}
+            >
+              {creatingThread ? "Starting..." : "Start chat"}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-700 mb-4">
+          Send a short message to the owner to let them know you found this
+          item.
+        </p>
+        <textarea
+          className="w-full border rounded-lg p-3 mb-2"
+          placeholder={`Hi, I may have found your ${item.title}.`}
+          value={chatMessage}
+          onChange={(e) => setChatMessage(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 }

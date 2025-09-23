@@ -19,7 +19,6 @@ const Header = () => {
   const [pillStyle, setPillStyle] = useState({ width: 0, left: 0 });
   const navRefs = useRef([]);
 
-  // Check if we're on the landing page
   const isLandingPage = location.pathname === "/";
 
   const navigationItems = [
@@ -34,7 +33,6 @@ const Header = () => {
     (item) => item.label === activeNav
   );
 
-  // Update pill position and size when active nav changes (only on landing page)
   useEffect(() => {
     if (isLandingPage) {
       const activeElement = navRefs.current[activeIndex];
@@ -62,16 +60,20 @@ const Header = () => {
         {/* Logo Section - Left */}
         <Link
           to="/"
+          onClick={(e) => {
+            if (isLandingPage) {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
           className="font-display text-3xl md:text-2xl font-bold text-ink cursor-pointer transition-colors hover:text-primary justify-self-start no-underline"
         >
           RetrieveApp
         </Link>
 
-        {/* Navigation Section - Center (Only show on landing page) */}
         {isLandingPage ? (
           <nav className="hidden lg:flex justify-center">
             <div className="relative flex items-center bg-gray-100 rounded-full">
-              {/* Sliding background pill with orange border */}
               <div
                 className="absolute bg-white rounded-full shadow-sm transition-all duration-300 ease-in-out h-full border-2 border-primary"
                 style={{
@@ -109,8 +111,6 @@ const Header = () => {
           </nav>
         ) : (
           <>
-            {/* For non-landing pages, show current page title in center */}
-
             <div className="hidden lg:flex justify-center"></div>
           </>
         )}
