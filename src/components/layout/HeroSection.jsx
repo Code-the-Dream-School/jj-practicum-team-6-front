@@ -3,7 +3,8 @@ import Button from "../ui/Button";
 
 const HeroSection = () => {
   return (
-    <section className="bg-gradient-to-br from-orange-50 to-blue-50 py-16 min-h-[80vh] flex items-center">
+    //<section className="bg-gradient-to-br from-orange-50 to-blue-50 py-16 min-h-[80vh] flex items-center">
+    <section className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-16 min-h-[80vh] flex items-center">
       <div className="max-w-6xl mx-auto px-6 w-full">
         <div className="flex flex-col items-center gap-6 text-center max-w-4xl mx-auto">
           {/* Main Title */}
@@ -22,7 +23,19 @@ const HeroSection = () => {
           </p>
 
           {/* CTA Button */}
-          <Button variant="primary" size="large">
+          <Button
+            variant="primary"
+            size="large"
+            onClick={() => {
+              const mapSection = document.querySelector("#recently-added");
+              if (mapSection) {
+                mapSection.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }
+            }}
+          >
             See what you can do
           </Button>
 
