@@ -1,385 +1,449 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
-import EmojiPicker from "emoji-picker-react";
-import { FaRegSmile, FaRegImage, FaFlag } from "react-icons/fa";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ThreadList from "../components/ThreadList";
-import ConfirmModal from "../components/ConfirmModal";
 import MessageInput from "../components/MessageInput";
 import ReportModal from "../components/ReportModal";
-import dayjs from "dayjs";
-import messagesService from "../services/messagesService";
+import { listThreads, getMessages, postMessage } from "../services/messagesService";
+import { getUploadSignature } from "../services/uploadsService";
+import { useAuth } from "../contexts/AuthContext.jsx";
+
+const AVATAR_PLACEHOLDER = "/images/avatar-placeholder.svg";
 
 export default function MessagesPage() {
-  const [searchParams] = useSearchParams();
-  const [confirmDelete, setConfirmDelete] = useState({
-    open: false,
-    threadId: null,
-  });
+  // Threads (left)
   const [threads, setThreads] = useState([]);
-  const [activeThreadId, setActiveThreadId] = useState("");
-  const [input, setInput] = useState("");
-  const [loadingChats] = useState(false);
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingThreads, setLoadingThreads] = useState(true);
+  const [threadsError, setThreadsError] = useState("");
+
+  // URL / selection
+  const { search } = useLocation();
+  const navigate = useNavigate();
+  const threadFromUrl = useMemo(() => new URLSearchParams(search).get("thread"), [search]);
+  const [selectedId, setSelectedId] = useState(null);
+
+  // Messages
   const [messages, setMessages] = useState([]);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messagesError, setMessagesError] = useState("");
 
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [reportText, setReportText] = useState("");
-  const [reportSent, setReportSent] = useState(false);
-
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  const chatContainerRef = useRef(null);
-  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
-  const [nearBottom, setNearBottom] = useState(true);
-
-  const scrollToBottom = () => {
-    const el = chatContainerRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  };
-
+  // Current user id (robust)
+  const auth = (typeof useAuth === "function" ? useAuth() : {}) || {};
+  const [myId, setMyId] = useState(null);
   useEffect(() => {
-    const thread = threads.find((t) => t.id === activeThreadId);
-    // If we don't have messages loaded for this thread, fetch them
-    if (
-      thread &&
-      (!Array.isArray(thread.messages) || thread.messages.length === 0)
-    ) {
-      setLoadingMessages(true);
-      messagesService
-        .getMessages(activeThreadId, { page: 1, size: 100 })
-        .then(({ messages: list = [] } = {}) => {
-          setThreads((prev) =>
-            prev.map((t) =>
-              t.id === activeThreadId ? { ...t, messages: list } : t
-            )
-          );
-          setMessages(list);
-        })
-        .catch((err) => {
-          console.warn("Failed to load messages", err);
-          setMessages([]);
-        })
-        .finally(() => {
-          setLoadingMessages(false);
-          setTimeout(() => {
-            setIsUserScrolledUp(false);
-            scrollToBottom();
-          }, 0);
-        });
-    } else {
-      setMessages(thread ? thread.messages : []);
-      setTimeout(() => {
-        setIsUserScrolledUp(false);
-        scrollToBottom();
-      }, 0);
+    // try useAuth().user?.id, then localStorage fallback
+    const fromHook =
+      auth?.user?.id ??
+      auth?.user?.user?.id ?? // some apps store nested object
+      auth?.currentUser?.id ??
+      null;
+
+    if (fromHook) {
+      setMyId(fromHook);
+      return;
     }
-  }, [activeThreadId, threads]);
+    try {
+      const raw = localStorage.getItem("user");
+      const parsed = raw ? JSON.parse(raw) : null;
+      setMyId(parsed?.id || null);
+    } catch {
+      setMyId(null);
+    }
+  }, [auth?.user, auth?.currentUser]);
 
+  // Composer state
+  const [draft, setDraft] = useState("");
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const isDesktop = useIsDesktop();
+
+  function setThreadInUrl(id, { replace = false } = {}) {
+    const q = new URLSearchParams(search);
+    if (id) q.set("thread", id);
+    else q.delete("thread");
+    const qs = q.toString();
+    navigate({ search: qs ? `?${qs}` : "" }, { replace });
+  }
+
+  // Report modal state
+const [showReport, setShowReport] = useState(false);
+const [reportText, setReportText] = useState("");
+const [reportSent, setReportSent] = useState(false);
+
+function openReport() {
+  setReportText("");
+  setReportSent(false);
+  setShowReport(true);
+}
+function closeReport() {
+  setShowReport(false);
+}
+function submitReport(e) {
+  e.preventDefault();
+  setReportSent(true);
+  setTimeout(() => setShowReport(false), 1200);
+}
+
+
+  // Load threads
   useEffect(() => {
-    let mounted = true;
     (async () => {
+      setLoadingThreads(true);
       try {
-        const { threads: list = [] } = await messagesService.listThreads({
-          page: 1,
-          size: 50,
-        });
-        if (!mounted) return;
-        // threads from API may not include messages; keep messages array empty until loaded per-thread
-        setThreads(list.map((t) => ({ ...t, messages: t.messages || [] })));
-        const preselect = searchParams.get("tid");
-        if (preselect && list.some((t) => String(t.id) === String(preselect))) {
-          setActiveThreadId(preselect);
-        } else if (list.length > 0 && !activeThreadId) {
-          setActiveThreadId(list[0].id);
-        }
-      } catch (err) {
-        console.warn("Failed to load threads", err);
+        const res = await listThreads();
+        const items = res?.threads || res?.data || [];
+        setThreads(items);
+
+        let initial = null;
+        if (threadFromUrl && items.some((t) => t.id === threadFromUrl)) initial = threadFromUrl;
+        else if (items.length && isDesktop) initial = items[0].id;
+
+        setSelectedId(initial);
+        setThreadInUrl(initial, { replace: true });
+        setThreadsError("");
+      } catch (e) {
+        setThreadsError(e?.message || "Failed to load conversations");
+      } finally {
+        setLoadingThreads(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDesktop, threadFromUrl]);
 
+  // React to ?thread changes
   useEffect(() => {
-    const el = chatContainerRef.current;
-    if (!el) return;
-    if (!isUserScrolledUp || nearBottom) {
-      scrollToBottom();
+    if (!threads.length || !threadFromUrl) return;
+    if (threads.some((t) => t.id === threadFromUrl)) setSelectedId(threadFromUrl);
+  }, [threadFromUrl, threads]);
+
+  // Load messages for selected
+  useEffect(() => {
+    if (!selectedId) {
+      setMessages([]);
+      return;
     }
-  }, [messages, isUserScrolledUp, nearBottom]);
+    (async () => {
+      setLoadingMessages(true);
+      try {
+        const res = await getMessages(selectedId, { limit: 30 });
+        const arr = res?.messages || res?.data || [];
+        setMessages(arr);
+        setMessagesError("");
+      } catch (e) {
+        setMessagesError(e?.message || "Failed to load messages");
+      } finally {
+        setLoadingMessages(false);
+      }
+    })();
+  }, [selectedId]);
 
-  const handleEmojiClick = (emojiObject) => {
-    setInput((prev) => prev + (emojiObject.emoji || ""));
-    setShowEmojiPicker(false);
-  };
+  function handleSelectThread(id) {
+    setSelectedId(id);
+    setThreadInUrl(id);
+  }
 
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const imageUrl = URL.createObjectURL(file);
-    const newMsg = {
-      id: Date.now(),
-      sender: "me",
-      body: "",
-      imageUrl,
-      imageName: file.name,
-      createdAt: new Date().toISOString(),
-    };
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThreadId
-          ? { ...t, messages: [...t.messages, newMsg] }
-          : t
-      )
+  // Client-side Cloudinary upload (returns secure_url)
+  async function uploadToCloudinary(localFile, sig) {
+    const fd = new FormData();
+    fd.append("file", localFile);
+    fd.append("api_key", sig.apiKey);
+    fd.append("timestamp", String(sig.timestamp));
+    if (sig.folder) fd.append("folder", sig.folder);
+    fd.append("signature", sig.signature);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${sig.cloudName}/auto/upload`,
+      { method: "POST", body: fd }
     );
-    setMessages((prev) => [...prev, newMsg]);
-    setImageFile(null);
-    setImagePreview(null);
-    setTimeout(scrollToBottom, 0);
-  };
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.secure_url) throw new Error(data?.error?.message || "Upload failed");
+    return data.secure_url;
+  }
 
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-  };
+  // Send message
+  async function handleSend(e) {
+    e?.preventDefault();
+    if (!selectedId || busy) return;
 
-  const handleChatScroll = (e) => {
-    const el = e.currentTarget;
-    const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 80;
-    setNearBottom(isNearBottom);
-    setIsUserScrolledUp(!isNearBottom);
-  };
+    const text = draft.trim();
+    if (!text && !file) return;
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if ((!input.trim() && !imageFile) || !activeThreadId) return;
-    setErrorMsg("");
-    setIsUserScrolledUp(false);
-    const optimistic = {
-      id: `temp-${Date.now()}`,
-      sender: "me",
-      body: input.trim() || "",
-      imageUrl: imageFile ? imagePreview : undefined,
-      imageName: imageFile ? imageFile.name : undefined,
-      createdAt: new Date().toISOString(),
-      pending: true,
-    };
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThreadId
-          ? { ...t, messages: [...(t.messages || []), optimistic] }
-          : t
-      )
-    );
-    setMessages((prev) => [...prev, optimistic]);
-    setTimeout(scrollToBottom, 0);
-    const body = input.trim();
-    setInput("");
-    setImageFile(null);
-    setImagePreview(null);
+    const bodyToSend = text || "📷"; // backend requires non-empty body
+
+    setBusy(true);
     try {
-      const created = await messagesService.postMessage(activeThreadId, {
-        body,
+      let attachmentUrl = null;
+      if (file) {
+        const sig = await getUploadSignature();
+        attachmentUrl = await uploadToCloudinary(file, sig);
+      }
+
+      const optimistic = {
+        id: `optimistic-${Date.now()}`,
+        threadId: selectedId,
+        senderId: myId,
+        body: bodyToSend,
+        attachmentUrl,
+        createdAt: new Date().toISOString(),
+        __optimistic: true,
+      };
+      setMessages((prev) => [optimistic, ...prev]);
+
+      const saved = await postMessage(selectedId, { body: bodyToSend, attachmentUrl });
+      const savedMsg = saved?.data || saved;
+
+      setMessages((prev) => {
+        const withoutOpt = prev.filter((m) => !m.__optimistic);
+        return [savedMsg, ...withoutOpt];
       });
-      setThreads((prev) =>
-        prev.map((t) =>
-          t.id === activeThreadId
-            ? {
-                ...t,
-                messages: (t.messages || []).map((m) =>
-                  m.id === optimistic.id ? created : m
-                ),
-              }
-            : t
-        )
-      );
-      setMessages((prev) =>
-        prev.map((m) => (m.id === optimistic.id ? created : m))
-      );
+
+      setDraft("");
+      clearImage();
     } catch (err) {
-      console.error("Failed to send message", err);
-      setThreads((prev) =>
-        prev.map((t) =>
-          t.id === activeThreadId
-            ? {
-                ...t,
-                messages: (t.messages || []).filter(
-                  (m) => m.id !== optimistic.id
-                ),
-              }
-            : t
-        )
-      );
-      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
-      setErrorMsg(err?.message || "Failed to send message");
+      setMessages((prev) => prev.filter((m) => !m.__optimistic));
+      alert(err?.message || "Failed to send");
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
-  const activeThread = threads.find((t) => t.id === activeThreadId);
+  // Emoji & image handlers
+  function onEmojiClick(emojiData) {
+    setDraft((v) => v + (emojiData?.emoji || ""));
+  }
+  function onPickImage(e) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setFilePreview(URL.createObjectURL(f));
+  }
+  function clearImage() {
+    setFile(null);
+    if (filePreview) URL.revokeObjectURL(filePreview);
+    setFilePreview("");
+  }
 
-  const handleReportSubmit = (e) => {
-    e.preventDefault();
-    setReportSent(true);
-    setTimeout(() => {
-      setShowReportModal(false);
-      setReportText("");
-      setReportSent(false);
-    }, 1500);
-  };
-
-  const HideScrollbarStyles = () => (
-    <style>{`
-      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      .hide-scrollbar::-webkit-scrollbar { display: none; }
-    `}</style>
-  );
+  const selectedThread = useMemo(() => threads.find((t) => t.id === selectedId), [threads, selectedId]);
+  const hasThreads = threads.length > 0;
 
   return (
-    <>
-      <HideScrollbarStyles />
-      <div className="flex h-[calc(100dvh-120px)] min-h-0 w-full overflow-hidden overscroll-none bg-gradient-to-br from-blue-50 to-yellow-50">
-        <ThreadList
-          threads={threads}
-          activeThreadId={activeThreadId}
-          setActiveThreadId={setActiveThreadId}
-          loadingChats={loadingChats}
-          onDeleteThread={(threadId) =>
-            setConfirmDelete({ open: true, threadId })
-          }
-        />
-        <ConfirmModal
-          open={confirmDelete.open}
-          text="Delete this chat?"
-          onConfirm={() => {
-            setThreads((prev) =>
-              prev.filter((t) => t.id !== confirmDelete.threadId)
-            );
-            if (
-              activeThreadId === confirmDelete.threadId &&
-              threads.length > 1
-            ) {
-              const next = threads.find((t) => t.id !== confirmDelete.threadId);
-              setActiveThreadId(next?.id || "");
-            }
-            setConfirmDelete({ open: false, threadId: null });
-          }}
-          onCancel={() => setConfirmDelete({ open: false, threadId: null })}
-        />
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundImage: "url('/images/chat-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="grid grid-cols-12 max-w-7xl mx-auto gap-4 px-4 py-6">
+        {/* LEFT */}
+        <div className={selectedId ? "hidden md:block col-span-12 md:col-span-3" : "block col-span-12 md:col-span-3"}>
+          <ThreadList
+            threads={threads}
+            selectedId={selectedId}
+            loading={loadingThreads}
+            error={threadsError}
+            onSelect={handleSelectThread}
+          />
+        </div>
 
-        <main className="flex-1 min-w-0 h-full min-h-0 flex flex-col overflow-hidden">
-          {activeThread ? (
-            <React.Fragment>
-              <div className="flex items-center gap-3 px-4 sm:px-6 md:px-8 py-3 md:py-4 border-b bg-white shrink-0">
-                {activeThread.participant?.avatarUrl ? (
-                  <img
-                    src={activeThread.participant.avatarUrl}
-                    alt={activeThread.participant.firstName || "User"}
-                    className="w-8 h-8 rounded-full object-cover border"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg border">
-                    {activeThread.participant?.firstName?.[0] || "U"}
-                  </div>
-                )}
-                <div className="font-semibold">
-                  {activeThread.participant?.firstName}{" "}
-                  {activeThread.participant?.lastName}
-                </div>
-                <button
-                  className="ml-auto bg-primary hover:bg-[#d14d2a] text-white px-4 py-2 rounded-full font-semibold transition-colors flex items-center gap-2"
-                  onClick={() => setShowReportModal(true)}
-                  type="button"
-                  title="Report"
-                >
-                  <FaFlag className="text-lg" />
-                  Report
-                </button>
-                <ReportModal
-                  show={showReportModal}
-                  onClose={() => setShowReportModal(false)}
-                  onSubmit={handleReportSubmit}
-                  reportText={reportText}
-                  setReportText={setReportText}
-                  reportSent={reportSent}
-                />
-              </div>
-              {errorMsg && (
-                <div className="px-4 sm:px-6 md:px-8 py-2 bg-red-50 text-red-700 border-y border-red-200">
-                  {errorMsg}
-                </div>
-              )}
-
-              <div
-                className="flex-1 min-h-0 w-full overflow-y-auto hide-scrollbar px-4 sm:px-6 md:px-8 py-2 flex flex-col gap-2 min-w-0"
-                ref={chatContainerRef}
-                onScroll={handleChatScroll}
+        {/* RIGHT */}
+        <section
+          className={[
+            "col-span-12 md:col-span-9 rounded-2xl overflow-hidden md:flex flex-col h-[calc(100vh-160px)]",
+            selectedId ? "flex" : "hidden md:flex",
+          ].join(" ")}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-white">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100"
+                aria-label="Back to conversations"
+                onClick={() => {
+                  setSelectedId(null);
+                  setThreadInUrl(null);
+                }}
               >
-                {loadingMessages ? (
-                  <div className="text-center text-gray-400">Loading...</div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center text-gray-400">No messages</div>
-                ) : (
-                  messages.map((msg, idx) => {
-                    const showDate =
-                      idx === 0 ||
-                      !dayjs(msg.createdAt).isSame(
-                        messages[idx - 1].createdAt,
-                        "day"
-                      );
-                    return (
-                      <React.Fragment key={msg.id}>
-                        {showDate && (
-                          <div className="text-center text-xs text-gray-400 my-2">
-                            {dayjs(msg.createdAt).format("MMM D, YYYY")}
-                          </div>
-                        )}
-                        <div
-                          className={`shrink-0 max-w-[70%] px-4 py-2 rounded-lg text-sm flex flex-col gap-2 break-words whitespace-pre-wrap overflow-hidden ${
-                            msg.sender === "me"
-                              ? "bg-black text-white self-end"
-                              : "bg-gray-100 text-gray-800 self-start"
-                          }`}
-                        >
-                          {msg.body && <span>{msg.body}</span>}
-                          {msg.imageUrl && (
-                            <img
-                              src={msg.imageUrl}
-                              alt={msg.imageName || "uploaded"}
-                              className="rounded max-w-full md:max-w-[200px] h-auto max-h-[200px] border mt-1"
-                            />
-                          )}
-                        </div>
-                      </React.Fragment>
-                    );
-                  })
-                )}
-              </div>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M14.7 6.3a1 1 0 0 1 0 1.4L10.41 12l4.3 4.3a1 1 0 0 1-1.42 1.4l-5-5a1 1 0 0 1 0-1.4l5-5a1 1 0 0 1 1.42 0Z" />
+                </svg>
+              </button>
 
-              <MessageInput
-                input={input}
-                setInput={setInput}
-                handleSend={handleSend}
-                showEmojiPicker={showEmojiPicker}
-                setShowEmojiPicker={setShowEmojiPicker}
-                handleEmojiClick={handleEmojiClick}
-                handleImageChange={handleImageChange}
-                imageFile={imageFile}
-                imagePreview={imagePreview}
-                handleRemoveImage={handleRemoveImage}
+              <Avatar
+                src={selectedThread?.otherUser?.avatarUrl}
+                alt={selectedThread?.otherUser ? otherPartyName(selectedThread) : "User"}
+                size={32}
               />
-            </React.Fragment>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400">
-              Select a chat
+              <div className="text-[14px] font-semibold">
+                {selectedThread?.otherUser
+                  ? otherPartyName(selectedThread)
+                  : hasThreads
+                  ? "Select a conversation"
+                  : "No conversations yet"}
+              </div>
             </div>
-          )}
-        </main>
+
+            <button
+              type="button"
+              className="rounded-full bg-[#FF725E] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
+              disabled={!selectedId}
+              onClick={openReport}
+            >
+              Report
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-5 py-6">
+            {loadingMessages ? (
+              <div className="text-sm text-gray-700">Loading messages…</div>
+            ) : messagesError ? (
+              <div className="text-sm text-red-600">{messagesError}</div>
+            ) : !messages.length ? (
+              <div className="text-sm text-gray-700">
+                {selectedId ? "No messages yet" : hasThreads ? "Choose a chat on the left." : "No conversations yet"}
+              </div>
+            ) : (
+              <div className="mx-auto max-w-2xl space-y-3">
+                {messages
+                  .slice()
+                  .reverse()
+                  .map((m) =>
+                    m.senderId && myId && m.senderId === myId ? (
+                      <BubbleRight key={m.id} {...m} />
+                    ) : (
+                      <BubbleLeft key={m.id} {...m} />
+                    )
+                  )}
+              </div>
+            )}
+          </div>
+
+          {/* Composer */}
+          <MessageInput
+            value={draft}
+            setValue={setDraft}
+            onSend={handleSend}
+            showEmojiPicker={showEmojiPicker}
+            setShowEmojiPicker={setShowEmojiPicker}
+            onEmojiClick={onEmojiClick}
+            onPickImage={onPickImage}
+            filePreview={filePreview}
+            clearImage={clearImage}
+            disabled={!selectedId || busy}
+          />
+          <ReportModal
+            show={showReport}
+            onClose={closeReport}
+            onSubmit={submitReport}
+            reportText={reportText}
+            setReportText={setReportText}
+            reportSent={reportSent}
+          />
+
+
+        </section>
       </div>
-    </>
+    </div>
   );
+}
+
+/* helpers */
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return isDesktop;
+}
+
+function Avatar({ src, alt = "avatar", size = 40 }) {
+  const dim = `${size}px`;
+  return (
+    <div className="rounded-full bg-gray-200 overflow-hidden flex-shrink-0" style={{ width: dim, height: dim }}>
+      <img
+        src={src || AVATAR_PLACEHOLDER}
+        alt={alt}
+        className="h-full w-full object-cover"
+        onError={(e) => {
+          e.currentTarget.src = AVATAR_PLACEHOLDER;
+        }}
+      />
+    </div>
+  );
+}
+
+function otherPartyName(thread) {
+  const other = thread?.otherUser;
+  if (!other) return "Conversation";
+  const full = `${other.firstName || ""} ${other.lastName || ""}`.trim();
+  return full || other.name || "Conversation";
+}
+
+function isImageUrl(url = "") {
+  return /\.(png|jpe?g|webp|gif|bmp|svg)(\?.*)?$/i.test(url);
+}
+
+function BubbleLeft({ body: text, createdAt: time, attachmentUrl }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="rounded-2xl px-3 py-2 bg-gray-200 text-[13px] text-gray-900 max-w-[66%] md:max-w-[640px] space-y-2 shadow-sm">
+        {text && <div className="whitespace-pre-wrap break-words">{text}</div>}
+        {attachmentUrl &&
+          (isImageUrl(attachmentUrl) ? (
+            <img src={attachmentUrl} alt="attachment" className="rounded-xl max-w-full" loading="lazy" />
+          ) : (
+            <a
+              href={attachmentUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block px-3 py-1 text-sm bg-black text-white rounded-md"
+            >
+              Open attachment
+            </a>
+          ))}
+      </div>
+      <div className="self-end text-[10px] text-gray-500">{formatTime(time)}</div>
+    </div>
+  );
+}
+
+function BubbleRight({ body: text, createdAt: time, attachmentUrl }) {
+  return (
+    <div className="flex items-start gap-2 justify-end">
+      <div className="self-end text-[10px] text-gray-500">{formatTime(time)}</div>
+      <div className="rounded-2xl px-3 py-2 bg-black text-white text-[13px] max-w-[66%] md:max-w-[640px] space-y-2 shadow-sm">
+        {text && <div className="whitespace-pre-wrap break-words">{text}</div>}
+        {attachmentUrl &&
+          (isImageUrl(attachmentUrl) ? (
+            <img src={attachmentUrl} alt="attachment" className="rounded-xl max-w-full" loading="lazy" />
+          ) : (
+            <a
+              href={attachmentUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block px-3 py-1 text-sm bg-white text-black rounded-md"
+            >
+              Open attachment
+            </a>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function formatTime(iso) {
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return "";
+  }
 }
