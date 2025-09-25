@@ -12,6 +12,7 @@ function EditProfile() {
   });
 
   const [errors, setErrors] = useState({});
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -27,12 +28,17 @@ function EditProfile() {
       return;
     } else {
       console.log("Saved profile:", form);
-      alert("Profile updated successfully!");
-      navigate("/profile");
+      setSuccessMsg("Profile updated successfully!");
+      setTimeout(() => navigate("/profile"), 800);
     }
   };
   return (
     <div>
+      {successMsg && (
+        <div className="mb-4 rounded-lg bg-green-50 text-green-700 px-4 py-3 border border-green-200">
+          {successMsg}
+        </div>
+      )}
       <h2>Edit profile</h2>
       <form onSubmit={handleSubmit} className="">
         <div>

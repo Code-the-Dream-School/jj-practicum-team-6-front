@@ -1,11 +1,16 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
     <footer className="bg-black mt-auto py-16 pb-8 md:py-10 md:pb-8">
       <div className="max-w-6xl mx-auto px-4 md:px-6 flex flex-col items-center gap-6 text-center">
         {/* Logo */}
-        <div className="font-display text-2xl font-bold text-white cursor-pointer transition-colors hover:text-primary">
+        <Link
+          to="/"
+          className="font-display text-2xl font-bold text-white cursor-pointer transition-colors hover:text-primary"
+        >
           RetrieveApp
-        </div>
+        </Link>
 
         {/* Contact Info */}
         <div className="flex flex-col gap-3 items-center">

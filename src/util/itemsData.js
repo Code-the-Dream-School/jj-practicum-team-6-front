@@ -1,8 +1,6 @@
-// Shared Dummy or mock data to eliminate duplication and have ease - new file added
-// hardcoding the coordinates (lat and long) temporary for now
 export const mockItems = [
   {
-    id: 1,
+    id: "9a1b2c3d-4e5f-6789-abcd-ef0123456789",
     title: "Black iPhone 13 Pro",
     status: "Lost",
     location: "Central Park, NY",
@@ -14,7 +12,7 @@ export const mockItems = [
     userId: 123,
   },
   {
-    id: 2,
+    id: "3f2e1d0c-9b8a-7654-3210-fedcba987654",
     title: "Brown Leather Wallet",
     status: "Found",
     location: "Times Square, NY",
@@ -26,7 +24,7 @@ export const mockItems = [
     userId: 456,
   },
   {
-    id: 3,
+    id: "7c6b5a4f-3e2d-1c0b-9a8f-76543210abcd",
     title: "House Keys",
     status: "Lost",
     location: "Brooklyn Bridge",
@@ -38,7 +36,7 @@ export const mockItems = [
     userId: 123,
   },
   {
-    id: 4,
+    id: "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
     title: "AirPods Pro",
     status: "Found",
     location: "Madison Square Park",
@@ -50,7 +48,7 @@ export const mockItems = [
     userId: 789,
   },
   {
-    id: 5,
+    id: "0f1e2d3c-4b5a-6789-0abc-def123456789",
     title: "Red Backpack",
     status: "Lost",
     location: "Washington Square Park",
@@ -62,7 +60,7 @@ export const mockItems = [
     userId: 123,
   },
   {
-    id: 6,
+    id: "fa12bc34-de56-78ab-90cd-ef1234567890",
     title: "Gold Ring",
     status: "Found",
     location: "High Line Park",
@@ -73,9 +71,8 @@ export const mockItems = [
     imageUrl: "/ring.jpg",
     userId: 456,
   },
-
   {
-    id: 7,
+    id: "123e4567-e89b-12d3-a456-426614174000",
     title: "Blue Nike Sneakers",
     status: "Lost",
     location: "Central Park West",
@@ -86,9 +83,8 @@ export const mockItems = [
     imageUrl: "/sneakers.jpg",
     userId: 123,
   },
-
   {
-    id: 8,
+    id: "abcdef12-3456-7890-abcd-ef1234567890",
     title: "Silver Laptop",
     status: "Found",
     location: "Penn Station",
@@ -100,7 +96,7 @@ export const mockItems = [
     userId: 789,
   },
   {
-    id: 9,
+    id: "00112233-4455-6677-8899-aabbccddeeff",
     title: "Black Sunglasses",
     status: "Lost",
     location: "Riverside Park",
@@ -112,7 +108,7 @@ export const mockItems = [
     userId: 456,
   },
   {
-    id: 10,
+    id: "deadbeef-0000-1111-2222-333344445555",
     title: "Red Umbrella",
     status: "Found",
     location: "Grand Central Terminal",
@@ -124,7 +120,7 @@ export const mockItems = [
     userId: 123,
   },
   {
-    id: 11,
+    id: "cafebabe-1234-5678-9abc-def012345678",
     title: "Golden Retriever Collar",
     status: "Found",
     location: "Bryant Park",
@@ -136,7 +132,7 @@ export const mockItems = [
     userId: 789,
   },
   {
-    id: 12,
+    id: "feedface-9876-5432-10fe-dcba98765432",
     title: "White Earbuds",
     status: "Lost",
     location: "Union Square",
@@ -149,38 +145,34 @@ export const mockItems = [
   },
 ];
 
-// Utility functions
 export const getRecentItems = (count = 6) => {
   return mockItems.slice(0, count);
 };
 
 export const getItemById = (id) => {
-  return mockItems.find((item) => item.id === parseInt(id));
+  return mockItems.find((item) => String(item.id) === String(id));
 };
 
 export const filterItems = (
   items,
-  { search = "", status = "All", sort = "Newest" }
+  { search = "", status = "All", sort = "Newest" } = {}
 ) => {
   let filtered = [...items];
 
-  // Search filter
   if (search) {
     const searchLower = search.toLowerCase();
     filtered = filtered.filter(
       (item) =>
-        item.title.toLowerCase().includes(searchLower) ||
-        item.location.toLowerCase().includes(searchLower) ||
-        item.description.toLowerCase().includes(searchLower)
+        (item.title || "").toLowerCase().includes(searchLower) ||
+        (item.location || "").toLowerCase().includes(searchLower) ||
+        (item.description || "").toLowerCase().includes(searchLower)
     );
   }
 
-  // Status filter
   if (status !== "All") {
     filtered = filtered.filter((item) => item.status === status);
   }
 
-  // Sort
   filtered.sort((a, b) => {
     switch (sort) {
       case "Name":

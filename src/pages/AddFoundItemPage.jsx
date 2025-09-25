@@ -1,12 +1,20 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaMapMarkerAlt, FaImage, FaUpload } from "react-icons/fa";
 import Input from "../components/ui/Input.jsx";
 import LocationMap from "../components/LocationMap.jsx";
 import Button from "../components/ui/Button.jsx";
 import categories from "../util/categories";
+import itemsService from "../services/itemsService";
+import uploadsService from "../services/uploadsService";
+import Modal from "../components/Modal.jsx";
 
 export default function AddFoundItemPage({ currentUser }) {
   const [showMap, setShowMap] = useState(false);
+  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [coords, setCoords] = useState({ lat: null, lng: null });
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -36,6 +44,7 @@ export default function AddFoundItemPage({ currentUser }) {
       }
     } catch (e) {}
     setForm((prev) => ({ ...prev, location: locationString }));
+    setCoords({ lat: latlng.lat, lng: latlng.lng });
     setShowMap(false);
   }
 
@@ -52,11 +61,81 @@ export default function AddFoundItemPage({ currentUser }) {
 
   function onSubmit(e) {
     e.preventDefault();
-    alert("Submitted!");
+    (async () => {
+      setSubmitting(true);
+      setErrorMsg("");
+      try {
+        const zipFromLocation = (form.location || "").match(/\b\d{5}\b/);
+        const zipCode = zipFromLocation
+          ? zipFromLocation[0]
+          : form.location || "";
+        const payload = {
+          title: form.title,
+          description: form.description,
+          status: "FOUND",
+          categoryName: form.category,
+          zipCode,
+          ...(Number.isFinite(coords.lat) && Number.isFinite(coords.lng)
+            ? { latitude: coords.lat, longitude: coords.lng }
+            : {}),
+        };
+        const created = await itemsService.createItem(payload);
+        if (created?.id && form.photos?.length) {
+          try {
+            const sig = await uploadsService.getUploadSignature({
+              folder: "items",
+            });
+            const { cloudName, apiKey, timestamp, folder, signature } = sig;
+            const uploadedUrls = [];
+            for (const file of form.photos) {
+              const fd = new FormData();
+              fd.append("file", file);
+              fd.append("api_key", apiKey);
+              fd.append("timestamp", timestamp);
+              fd.append("folder", folder);
+              fd.append("signature", signature);
+              const resp = await fetch(
+                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+                {
+                  method: "POST",
+                  body: fd,
+                }
+              );
+              const body = await resp.json();
+              if (resp.ok && body.secure_url)
+                uploadedUrls.push(body.secure_url);
+            }
+            if (uploadedUrls.length) {
+              await itemsService.addItemPhotos(
+                created.id,
+                uploadedUrls.map((url) => ({ url }))
+              );
+            }
+          } catch (e) {
+            console.warn("photo upload failed", e);
+          }
+        }
+        if (created && created.id) {
+          navigate(`/items/${created.id}`);
+        } else {
+          navigate("/");
+        }
+      } catch (err) {
+        console.error("create FOUND item failed", err);
+        setErrorMsg("Failed to create item. Please try again.");
+      } finally {
+        setSubmitting(false);
+      }
+    })();
   }
 
   return (
     <div className="flex flex-col items-center">
+      {errorMsg && (
+        <div className="max-w-3xl mx-auto mb-4 rounded-lg bg-red-50 text-red-700 px-4 py-3 border border-red-200">
+          {errorMsg}
+        </div>
+      )}
       <main className="w-full">
         <h1 className="text-center font-display text-4xl font-black mt-10 mb-8">
           Add Found Item
@@ -114,26 +193,19 @@ export default function AddFoundItemPage({ currentUser }) {
             >
               <FaMapMarkerAlt />
             </button>
-            {showMap && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-xl relative">
-                  <button
-                    className="absolute top-2 right-2 text-gray-500 hover:text-black text-xl"
-                    onClick={() => setShowMap(false)}
-                    aria-label="Close map"
-                  >
-                    &times;
-                  </button>
-                  <h3 className="text-lg font-bold mb-4">Select Location</h3>
-                  <div className="w-full h-80 overflow-hidden rounded-lg">
-                    <LocationMap onSelect={handleMapSelect} />
-                  </div>
-                  <p className="mt-3 text-sm text-gray-500">
-                    Click on the map to set location
-                  </p>
-                </div>
+            <Modal
+              open={showMap}
+              onClose={() => setShowMap(false)}
+              title="Select Location"
+              maxWidth="max-w-xl"
+            >
+              <div className="w-full h-80 overflow-hidden rounded-lg">
+                <LocationMap onSelect={handleMapSelect} />
               </div>
-            )}
+              <p className="mt-3 text-sm text-gray-500">
+                Click on the map to set location
+              </p>
+            </Modal>
             <div className="flex-1">
               <label className="block font-semibold mb-2">Date Found</label>
               <div className="relative">
@@ -231,8 +303,9 @@ export default function AddFoundItemPage({ currentUser }) {
               variant="primary"
               size="medium"
               className="rounded-full font-medium shadow-card max-w-xs"
+              disabled={submitting}
             >
-              Save and Publish
+              {submitting ? "Saving…" : "Save and Publish"}
             </Button>
           </div>
         </form>

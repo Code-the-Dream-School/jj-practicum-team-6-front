@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
 import { FaRegSmile, FaRegImage, FaFlag } from "react-icons/fa";
 import ThreadList from "../components/ThreadList";
@@ -6,8 +7,10 @@ import ConfirmModal from "../components/ConfirmModal";
 import MessageInput from "../components/MessageInput";
 import ReportModal from "../components/ReportModal";
 import dayjs from "dayjs";
+import messagesService from "../services/messagesService";
 
 export default function MessagesPage() {
+  const [searchParams] = useSearchParams();
   const [confirmDelete, setConfirmDelete] = useState({
     open: false,
     threadId: null,
@@ -16,8 +19,9 @@ export default function MessagesPage() {
   const [activeThreadId, setActiveThreadId] = useState("");
   const [input, setInput] = useState("");
   const [loadingChats] = useState(false);
-  const [loadingMessages] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportText, setReportText] = useState("");
@@ -39,12 +43,67 @@ export default function MessagesPage() {
 
   useEffect(() => {
     const thread = threads.find((t) => t.id === activeThreadId);
-    setMessages(thread ? thread.messages : []);
-    setTimeout(() => {
-      setIsUserScrolledUp(false);
-      scrollToBottom();
-    }, 0);
+    // If we don't have messages loaded for this thread, fetch them
+    if (
+      thread &&
+      (!Array.isArray(thread.messages) || thread.messages.length === 0)
+    ) {
+      setLoadingMessages(true);
+      messagesService
+        .getMessages(activeThreadId, { page: 1, size: 100 })
+        .then(({ messages: list = [] } = {}) => {
+          setThreads((prev) =>
+            prev.map((t) =>
+              t.id === activeThreadId ? { ...t, messages: list } : t
+            )
+          );
+          setMessages(list);
+        })
+        .catch((err) => {
+          console.warn("Failed to load messages", err);
+          setMessages([]);
+        })
+        .finally(() => {
+          setLoadingMessages(false);
+          setTimeout(() => {
+            setIsUserScrolledUp(false);
+            scrollToBottom();
+          }, 0);
+        });
+    } else {
+      setMessages(thread ? thread.messages : []);
+      setTimeout(() => {
+        setIsUserScrolledUp(false);
+        scrollToBottom();
+      }, 0);
+    }
   }, [activeThreadId, threads]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { threads: list = [] } = await messagesService.listThreads({
+          page: 1,
+          size: 50,
+        });
+        if (!mounted) return;
+        // threads from API may not include messages; keep messages array empty until loaded per-thread
+        setThreads(list.map((t) => ({ ...t, messages: t.messages || [] })));
+        const preselect = searchParams.get("tid");
+        if (preselect && list.some((t) => String(t.id) === String(preselect))) {
+          setActiveThreadId(preselect);
+        } else if (list.length > 0 && !activeThreadId) {
+          setActiveThreadId(list[0].id);
+        }
+      } catch (err) {
+        console.warn("Failed to load threads", err);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const el = chatContainerRef.current;
@@ -96,30 +155,69 @@ export default function MessagesPage() {
     setIsUserScrolledUp(!isNearBottom);
   };
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if ((!input.trim() && !imageFile) || !activeThreadId) return;
+    setErrorMsg("");
     setIsUserScrolledUp(false);
-    const newMsg = {
-      id: Date.now(),
+    const optimistic = {
+      id: `temp-${Date.now()}`,
       sender: "me",
       body: input.trim() || "",
       imageUrl: imageFile ? imagePreview : undefined,
       imageName: imageFile ? imageFile.name : undefined,
       createdAt: new Date().toISOString(),
+      pending: true,
     };
     setThreads((prev) =>
       prev.map((t) =>
         t.id === activeThreadId
-          ? { ...t, messages: [...t.messages, newMsg] }
+          ? { ...t, messages: [...(t.messages || []), optimistic] }
           : t
       )
     );
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => [...prev, optimistic]);
     setTimeout(scrollToBottom, 0);
+    const body = input.trim();
     setInput("");
     setImageFile(null);
     setImagePreview(null);
+    try {
+      const created = await messagesService.postMessage(activeThreadId, {
+        body,
+      });
+      setThreads((prev) =>
+        prev.map((t) =>
+          t.id === activeThreadId
+            ? {
+                ...t,
+                messages: (t.messages || []).map((m) =>
+                  m.id === optimistic.id ? created : m
+                ),
+              }
+            : t
+        )
+      );
+      setMessages((prev) =>
+        prev.map((m) => (m.id === optimistic.id ? created : m))
+      );
+    } catch (err) {
+      console.error("Failed to send message", err);
+      setThreads((prev) =>
+        prev.map((t) =>
+          t.id === activeThreadId
+            ? {
+                ...t,
+                messages: (t.messages || []).filter(
+                  (m) => m.id !== optimistic.id
+                ),
+              }
+            : t
+        )
+      );
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setErrorMsg(err?.message || "Failed to send message");
+    }
   };
 
   const activeThread = threads.find((t) => t.id === activeThreadId);
@@ -210,6 +308,11 @@ export default function MessagesPage() {
                   reportSent={reportSent}
                 />
               </div>
+              {errorMsg && (
+                <div className="px-4 sm:px-6 md:px-8 py-2 bg-red-50 text-red-700 border-y border-red-200">
+                  {errorMsg}
+                </div>
+              )}
 
               <div
                 className="flex-1 min-h-0 w-full overflow-y-auto hide-scrollbar px-4 sm:px-6 md:px-8 py-2 flex flex-col gap-2 min-w-0"

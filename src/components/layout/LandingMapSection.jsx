@@ -1,18 +1,73 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaList, FaMap } from "react-icons/fa";
 import { MdLocationPin } from "react-icons/md";
 import { SlCalender } from "react-icons/sl";
 import LocationMap from "../LocationMap";
-import { getRecentItems, mockStats } from "../../util/itemsData";
+import itemsService from "../../services/itemsService";
 
 const LandingMapSection = () => {
   const [viewMode, setViewMode] = useState("map");
-  const navigate = useNavigate(); // ADD THIS LINE
+  const [recentItems, setRecentItems] = useState([]);
+  const [stats, setStats] = useState([]);
+  const navigate = useNavigate();
 
-  // Use the util itemData shared data instead of duplicated mock data
-  const recentItems = getRecentItems(6);
-  const stats = mockStats;
+  useEffect(() => {
+    let mounted = true;
+    const toStatusText = (s) => {
+      const x = (s || "").toString().toUpperCase();
+      if (x === "LOST") return "Lost";
+      if (x === "FOUND") return "Found";
+      if (x === "RESOLVED") return "Resolved";
+      return s || "Lost";
+    };
+    itemsService
+      .getItems({ page: 1, limit: 12, is_resolved: false })
+      .then(({ items = [], meta = {} } = {}) => {
+        if (!mounted) return;
+        const normalized = (items || []).map((it) => ({
+          ...it,
+          status: toStatusText(it.status),
+          imageUrl:
+            it.primaryPhotoUrl ||
+            (Array.isArray(it.photos) && it.photos.length
+              ? it.photos[0].url
+              : ""),
+          location: it.zipCode || it.location || "",
+          date: it.dateReported
+            ? new Date(it.dateReported).toLocaleDateString()
+            : it.createdAt
+              ? new Date(it.createdAt).toLocaleDateString()
+              : it.date || "",
+          userId: it.ownerId ?? it.userId,
+          lat: typeof it.latitude === "number" ? it.latitude : undefined,
+          lng: typeof it.longitude === "number" ? it.longitude : undefined,
+        }));
+        setRecentItems(normalized.slice(0, 6));
+        const lostCount = normalized.filter((i) => i.status === "Lost").length;
+        const foundCount = normalized.filter(
+          (i) => i.status === "Found"
+        ).length;
+        const total = meta.total || normalized.length || 0;
+        setStats([
+          { number: String(total), label: "Active Items" },
+          { number: String(lostCount), label: "Lost (shown)" },
+          { number: String(foundCount), label: "Found (shown)" },
+        ]);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setRecentItems([]);
+        setStats([
+          { number: "0", label: "Active Items" },
+          { number: "0", label: "Lost (shown)" },
+          { number: "0", label: "Found (shown)" },
+        ]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <section className="py-20 bg-white">
@@ -109,8 +164,6 @@ const LandingMapSection = () => {
             ))}
           </div>
         )}
-
-        {/* View All item button to go to the List all items page */}
         <div className="text-center mt-12">
           <button
             onClick={() => navigate("/items/list")}

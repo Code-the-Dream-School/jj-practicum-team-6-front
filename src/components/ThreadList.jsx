@@ -57,6 +57,13 @@ export default function ThreadList({
                 thread.type === "lost";
               const status = isLost ? "Lost" : "Found";
               const photo = item.primaryPhotoUrl || "/placeholder.png";
+              const lastMsg =
+                (thread.messages &&
+                  thread.messages[thread.messages.length - 1]) ||
+                thread.lastMessage ||
+                {};
+              const lastBody =
+                lastMsg.body || thread.messages?.[0]?.body || "No messages";
               return (
                 <div
                   key={thread.id}
@@ -77,10 +84,9 @@ export default function ThreadList({
                       {status}: {item.title || "Item"}
                     </span>
                     <span className="text-xs text-gray-500 break-words whitespace-normal">
-                      {(() => {
-                        const msg = thread.messages?.[0]?.body || "No messages";
-                        return msg.length > 40 ? msg.slice(0, 40) + "..." : msg;
-                      })()}
+                      {lastBody.length > 40
+                        ? lastBody.slice(0, 40) + "..."
+                        : lastBody}
                     </span>
                   </div>
                 </div>
