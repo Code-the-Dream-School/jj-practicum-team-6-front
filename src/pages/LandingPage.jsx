@@ -4,6 +4,12 @@ import HeroSection from "../components/layout/HeroSection";
 import LandingMapSection from "../components/layout/LandingMapSection";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Section from "../components/layout/Section";
+import HowItWorksSection from "../components/layout/HowItWorksSection";
+import OurValuesSection from "../components/layout/OurValuesSection";
+import CallToActionSection from "../components/layout/CallToActionSection";
+import OurTeamSection from "../components/layout/OurTeamSection";
+import AboutUsSection from "../components/layout/AboutUsSection";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 
 const LandingPage = () => {
   const [message, setMessage] = useState("");
@@ -43,26 +49,17 @@ const LandingPage = () => {
 
       <LandingMapSection />
 
-      <Section id="about" title="About Us Section">
-        This will be the about us content. Click "About us" in the nav to test
-        smooth scrolling.
-      </Section>
+      <HowItWorksSection />
 
-      <Section id="values" title="Our Values Section" bg="bg-gray-100">
-        Values content will go here. Test navigation scrolling.
-      </Section>
+      <OurValuesSection />
 
-      <Section id="how-it-works" title="How It Works Section">
-        How it works content will go here.
-      </Section>
+      <CallToActionSection />
 
-      <Section id="team" title="Our Team Section" bg="bg-gray-100">
-        Team content will go here.
-      </Section>
+      <OurTeamSection />
 
-      <Section id="contacts" title="Contacts Section">
-        Contact information will go here.
-      </Section>
+      <AboutUsSection />
+
+      <ScrollToTopButton />
     </>
   );
 };

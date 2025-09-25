@@ -7,7 +7,7 @@ import ProfileMenu from "../ProfileMenu";
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState("About us");
+  const [activeNav, setActiveNav] = useState("How it works?");
   const [pillStyle, setPillStyle] = useState({ width: 0, left: 0 });
   const navRefs = useRef([]);
 
@@ -15,11 +15,11 @@ const Header = () => {
   const hasToken = !!localStorage.getItem("token");
 
   const navigationItems = [
-    { label: "About us", href: "#about" },
-    { label: "Our values", href: "#values" },
     { label: "How it works?", href: "#how-it-works" },
+    { label: "Our values", href: "#values" },
+    { label: "Get Started", href: "#get-started" },
     { label: "Our team", href: "#team" },
-    { label: "Contacts", href: "#contacts" },
+    { label: "About us", href: "#about" },
   ];
 
   const activeIndex = navigationItems.findIndex(
@@ -60,6 +60,9 @@ const Header = () => {
             }
           }}
           className="font-display text-3xl md:text-2xl font-bold text-ink cursor-pointer transition-colors hover:text-primary justify-self-start no-underline"
+          onClick={() =>
+            window.scrollTo({ top: 0, left: 0, behavior: "smooth" })
+          }
         >
           RetrieveApp
         </Link>
@@ -89,10 +92,23 @@ const Header = () => {
                     e.preventDefault();
                     setActiveNav(item.label);
                     const element = document.querySelector(item.href);
+                    // if (element) {
+                    //   element.scrollIntoView({
+                    //     behavior: "smooth",
+                    //     block: "start",
+                    //   });
+                    // }
+
                     if (element) {
-                      element.scrollIntoView({
+                      const headerHeight = 100; // Adjust based on your header height
+                      const elementPosition =
+                        element.getBoundingClientRect().top +
+                        window.pageYOffset;
+                      const offsetPosition = elementPosition - headerHeight;
+
+                      window.scrollTo({
+                        top: offsetPosition,
                         behavior: "smooth",
-                        block: "start",
                       });
                     }
                   }}
