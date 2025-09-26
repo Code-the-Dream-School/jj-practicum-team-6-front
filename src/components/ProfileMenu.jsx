@@ -7,6 +7,7 @@ export default function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const { currentUser } = useContext(AuthContext);
+
   const userName =
     currentUser?.firstName ||
     currentUser?.name ||
@@ -21,7 +22,21 @@ export default function ProfileMenu() {
       }
     })();
 
+  const avatarUrl =
+    currentUser?.avatarUrl ||
+    (() => {
+      try {
+        const raw = localStorage.getItem("user");
+        if (!raw) return null;
+        const u = JSON.parse(raw);
+        return u?.avatarUrl || null;
+      } catch {
+        return null;
+      }
+    })();
+
   const toggleMenu = () => setIsOpen((prev) => !prev);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -31,19 +46,34 @@ export default function ProfileMenu() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   const handleLogout = () => {
     authLogout();
     window.location.href = "/signin";
   };
+
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
       <button
         onClick={toggleMenu}
         className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-black focus:outline-none"
       >
-        <span className="bg-black rounded-full p-1 flex items-center justify-center">
-          <FaUserCircle className="text-sm text-white font-semibold" />
-        </span>
+        {avatarUrl ? (
+          <span className="rounded-full overflow-hidden w-8 h-8 flex items-center justify-center">
+            <img
+              src={avatarUrl}
+              alt={userName}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "/images/avatar-placeholder.svg";
+              }}
+            />
+          </span>
+        ) : (
+          <span className="bg-black rounded-full p-1 flex items-center justify-center">
+            <FaUserCircle className="text-sm text-white font-semibold" />
+          </span>
+        )}
 
         <span className="hidden sm:inline">{userName}</span>
         <svg
@@ -52,12 +82,7 @@ export default function ProfileMenu() {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
