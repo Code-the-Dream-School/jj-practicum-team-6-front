@@ -49,7 +49,23 @@ export default function AddLostItemPage({ currentUser }) {
   }
 
   function onFileChange(e) {
-    setForm({ ...form, photos: Array.from(e.target.files) });
+    const picked = Array.from(e.target.files || []);
+     if (!picked.length) return;
+     setForm((prev) => {
+        const merged = [...prev.photos, ...picked];
+       // dedupe by name+size+lastModified
+       const seen = new Set();
+       const unique = [];
+       for (const f of merged) {
+         const key = `${f.name}-${f.size}-${f.lastModified}`;
+         if (seen.has(key)) continue;
+         seen.add(key);
+        unique.push(f);
+      }
+       return { ...prev, photos: unique };
+     });
+     // allow selecting the same file again
+     e.target.value = "";
   }
 
   function handleRemovePhoto(idx) {
