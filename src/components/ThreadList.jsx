@@ -32,7 +32,7 @@ export default function ThreadList({ threads = [], selectedId, loading, error, o
                 t.item?.status === "FOUND" ? "Found" :
                 t.item?.status === "LOST" ? "Lost" : "";
               const titleLine = [status, t.item?.title].filter(Boolean).join(": ");
-              const preview = (t.lastMessage?.body || t.lastMessage?.text || "").trim() || "No messages yet";
+              const preview = (t.lastMessage?.body || t.lastMessage?.text || "").trim(); // no fallback text
               const thumb = t.item?.primaryPhotoUrl;
 
               return (
@@ -55,7 +55,9 @@ export default function ThreadList({ threads = [], selectedId, loading, error, o
 
                     <div className="min-w-0">
                       <div className="text-[13px] font-semibold text-gray-900 truncate">{titleLine || "Conversation"}</div>
-                      <div className="text-[12px] text-gray-500 truncate">{preview}</div>
+                      {preview ? (
+                        <div className="text-[12px] text-gray-500 truncate">{preview}</div>
+                      ) : null}
                     </div>
                   </button>
                 </li>

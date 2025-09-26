@@ -438,14 +438,71 @@ export default function ItemDetail() {
 
           <div className="flex items-center gap-4 mb-8">
             <div className="flex gap-3">
-              <button
-                onClick={() => setChatModalOpen(true)}
-                className="bg-primary text-white px-4 py-3 rounded-full flex items-center justify-center gap-2 min-w-[180px]"
-                aria-label="I found this item"
-              >
-                <FaPaperPlane className="text-white" />
-                <span>I Found this item</span>
-              </button>
+            <button
+  onClick={async () => {
+    if (!item?.id) return;
+    setErrorMsg("");
+
+    const participantId =
+      (typeof resolveUserId === "function" && resolveUserId()) ||
+      storageUser?.id ||
+      storageUser?.userId;
+
+    if (!participantId) {
+      setErrorMsg("Please sign in to start a chat.");
+      return;
+    }
+
+    try {
+      // 1) check existing thread for this item
+      let threadId = null;
+      try {
+        const { threads } = await messagesService.listThreads({
+          itemId: item.id,
+          page: 1,
+          size: 1,
+        });
+        threadId = threads?.[0]?.id || null;
+      } catch (_) {}
+
+      // 2) create if missing
+      if (!threadId) {
+        const created = await messagesService.createThread({
+          itemId: item.id,
+          participantId,
+        });
+        threadId = created?.id || created?.threadId || created?.data?.id || created?.data?.threadId || null;
+      }
+
+      if (!threadId) {
+        setErrorMsg("Chat was created, but no thread id returned.");
+        return;
+      }
+
+      // 3) open exactly this thread via query param (your router supports /threads?tid=)
+      navigate(`/threads?tid=${encodeURIComponent(threadId)}`);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to start chat";
+      if (err?.response?.status === 401) {
+        setErrorMsg("Please sign in to start a chat.");
+        return;
+      }
+      setErrorMsg(msg);
+    }
+  }}
+  className="bg-primary text-white px-4 py-3 rounded-full flex items-center justify-center gap-2 min-w-[180px]"
+  aria-label="I found this item"
+>
+  <FaPaperPlane className="text-white" />
+  <span>I Found this item</span>
+</button>
+
+
+
 
               <button
                 onClick={toggleSeen}
