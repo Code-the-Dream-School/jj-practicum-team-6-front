@@ -1,97 +1,81 @@
-import React, { useState } from "react";
-import { FaSearch } from "react-icons/fa";
+import React from "react";
 
-export default function ThreadList({
-  threads,
-  activeThreadId,
-  setActiveThreadId,
-  loadingChats,
-  onDeleteThread,
-}) {
-  const [search, setSearch] = useState("");
-  const handleContextMenu = (e, threadId) => {
-    e.preventDefault();
-    onDeleteThread && onDeleteThread(threadId);
-  };
+const PLACEHOLDER_ICON = (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+    <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM8.5 11.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5Z" />
+  </svg>
+);
+
+export default function ThreadList({ threads = [], selectedId, loading, error, onSelect }) {
   return (
-    <aside className="shrink-0 w-64 sm:w-72 md:w-80 h-full min-h-0 border-r bg-white flex flex-col overflow-hidden">
-      <div className="p-4 pb-2">
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <FaSearch />
-          </span>
-          <input
-            className="w-full rounded-full border pl-10 pr-4 py-2"
-            placeholder="Search chats"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+    <aside className="col-span-12 md:col-span-3 rounded-2xl bg-white overflow-hidden h-[calc(100vh-160px)]">
+      <div className="p-3 border-b border-gray-100 bg-white">
+        <input
+          type="text"
+          placeholder="Search chats"
+          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none"
+          disabled
+        />
       </div>
-      <div className="flex-1 min-h-0 h-full overflow-y-auto hide-scrollbar">
-        {loadingChats ? (
-          <div className="text-center text-gray-400 mt-8">Loading...</div>
-        ) : threads.length === 0 ? (
-          <div className="text-center text-gray-400 mt-8">No threads</div>
+
+      <div className="h-full overflow-y-auto">
+        {loading ? (
+          <div className="p-4 text-sm text-gray-600">Loading…</div>
+        ) : error ? (
+          <div className="p-4 text-sm text-red-600">{error}</div>
+        ) : !threads.length ? (
+          <div className="p-4 text-sm text-gray-600">No conversations yet</div>
         ) : (
-          threads
-            .filter((thread) => {
-              const item = thread.item || {};
+          <ul className="divide-y divide-gray-100">
+            {threads.map((t) => {
+              const item = t.item || {};
+
+              const rawStatus =
+                item.status || t.type || (item.title || "").toLowerCase().includes("lost") ? "LOST" : "";
+
               const status =
-                item.title?.toLowerCase().includes("lost") ||
-                thread.type === "lost"
+                rawStatus === "FOUND" || rawStatus?.toLowerCase() === "found"
+                  ? "Found"
+                  : rawStatus === "LOST" || rawStatus?.toLowerCase() === "lost"
                   ? "Lost"
-                  : "Found";
-              const lastMsg = thread.messages?.[0]?.body || "";
-              const q = search.toLowerCase();
+                  : "";
+
+              const titleLine = [status, item.title].filter(Boolean).join(": ") || "Conversation";
+          
+              const preview =
+                (t.lastMessage?.body || t.lastMessage?.text || "").trim() ||
+                (Array.isArray(t.messages) && (t.messages.at(-1)?.body || t.messages.at(-1)?.text || "").trim()) ||
+                "No messages yet";
+
+              const thumb = item.primaryPhotoUrl;
+
               return (
-                item.title?.toLowerCase().includes(q) ||
-                status.toLowerCase().includes(q) ||
-                lastMsg.toLowerCase().includes(q)
+                <li key={t.id}>
+                  <button
+                    onClick={() => onSelect?.(t.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-gray-50 ${
+                      selectedId === t.id ? "bg-gray-100" : ""
+                    }`}
+                  >
+                    <div className="h-10 w-10 rounded-xl bg-gray-200 overflow-hidden flex-shrink-0">
+                      {thumb ? (
+                        <img src={thumb} alt="item" className="h-full w-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-gray-400">
+                          {PLACEHOLDER_ICON}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-semibold text-gray-900 truncate">{titleLine}</div>
+                      <div className="text-[12px] text-gray-500 truncate">{preview}</div>
+                    </div>
+                  </button>
+                </li>
               );
-            })
-            .map((thread) => {
-              const item = thread.item || {};
-              const isLost =
-                item.title?.toLowerCase().includes("lost") ||
-                thread.type === "lost";
-              const status = isLost ? "Lost" : "Found";
-              const photo = item.primaryPhotoUrl || "/placeholder.svg";
-              const lastMsg =
-                (thread.messages &&
-                  thread.messages[thread.messages.length - 1]) ||
-                thread.lastMessage ||
-                {};
-              const lastBody =
-                lastMsg.body || thread.messages?.[0]?.body || "No messages";
-              return (
-                <div
-                  key={thread.id}
-                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100 ${
-                    activeThreadId === thread.id ? "bg-gray-100" : ""
-                  }`}
-                  onClick={() => setActiveThreadId(thread.id)}
-                  onContextMenu={(e) => handleContextMenu(e, thread.id)}
-                  title="Right click to delete"
-                >
-                  <img
-                    src={photo}
-                    alt={item.title || "item"}
-                    className="w-10 h-10 rounded-full object-cover border"
-                  />
-                  <div className="flex flex-col min-w-0">
-                    <span className="font-semibold text-sm truncate">
-                      {status}: {item.title || "Item"}
-                    </span>
-                    <span className="text-xs text-gray-500 break-words whitespace-normal">
-                      {lastBody.length > 40
-                        ? lastBody.slice(0, 40) + "..."
-                        : lastBody}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
+            })}
+          </ul>
         )}
       </div>
     </aside>
