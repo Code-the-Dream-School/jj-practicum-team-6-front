@@ -22,10 +22,28 @@ export default function MyPosts() {
     item: null,
   });
   const [errorMsg, setErrorMsg] = useState("");
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     setPage(1);
   }, [search, filter, sort]);
+
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key === "lastItemUpdated") {
+        setRefreshTick((t) => t + 1);
+      }
+    }
+    function onCustom() {
+      setRefreshTick((t) => t + 1);
+    }
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("item-updated", onCustom);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("item-updated", onCustom);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -38,10 +56,15 @@ export default function MyPosts() {
     };
     const params = {
       q: search || undefined,
-      status: filter !== "All" ? toEnum(filter) : undefined,
       page: 1,
       limit: 50,
     };
+    if (filter === "Resolved") {
+      params.is_resolved = true;
+    } else if (filter === "Lost" || filter === "Found") {
+      params.status = toEnum(filter);
+      params.is_resolved = false;
+    }
     itemsService
       .getSelfItems(params)
       .then(({ items = [] } = {}) => {
@@ -55,7 +78,7 @@ export default function MyPosts() {
         };
         const normalized = (items || []).map((it) => ({
           ...it,
-          status: toStatusText(it.status),
+          status: it.isResolved ? "Resolved" : toStatusText(it.status),
           imageUrl:
             it.primaryPhotoUrl ||
             (Array.isArray(it.photos) && it.photos.length
@@ -94,7 +117,7 @@ export default function MyPosts() {
     return () => {
       mounted = false;
     };
-  }, [search, filter, sort, page]);
+  }, [search, filter, sort, page, refreshTick]);
 
   useEffect(() => {
     const filteredByStatus =
@@ -108,6 +131,67 @@ export default function MyPosts() {
   }, [allMyItems, filter, sort, page]);
 
   const handleEdit = (item) => navigate(`/items/edit/${item.id}`);
+  const handleResolve = async (item) => {
+    setErrorMsg("");
+    const prevAll = allMyItems;
+    const prevPage = myItems;
+    setAllMyItems((list) =>
+      list.map((i) =>
+        i.id === item.id
+          ? {
+              ...i,
+              isResolved: !i.isResolved,
+              status: !i.isResolved
+                ? "Resolved"
+                : i.baseStatus || i.status === "Resolved"
+                  ? "Lost"
+                  : i.status,
+            }
+          : i
+      )
+    );
+    setMyItems((list) =>
+      list.map((i) =>
+        i.id === item.id
+          ? {
+              ...i,
+              isResolved: !i.isResolved,
+              status: !i.isResolved
+                ? "Resolved"
+                : i.baseStatus || i.status === "Resolved"
+                  ? "Lost"
+                  : i.status,
+            }
+          : i
+      )
+    );
+    try {
+      await itemsService.updateItem(item.id, { isResolved: !item.isResolved });
+      try {
+        localStorage.setItem(
+          "lastItemUpdated",
+          JSON.stringify({
+            id: item.id,
+            at: Date.now(),
+            isResolved: !item.isResolved,
+          })
+        );
+      } catch {}
+      try {
+        window.dispatchEvent(
+          new CustomEvent("item-updated", {
+            detail: { id: item.id, isResolved: !item.isResolved },
+          })
+        );
+      } catch {}
+    } catch (err) {
+      setAllMyItems(prevAll);
+      setMyItems(prevPage);
+      const msg =
+        err?.message || err?.error?.message || "Failed to update item";
+      setErrorMsg(msg);
+    }
+  };
   const handleDelete = async (item) => {
     const prev = myItems;
     setErrorMsg("");
@@ -120,25 +204,6 @@ export default function MyPosts() {
       setMyItems(prev);
       const msg =
         err?.message || err?.error?.message || "Failed to delete item";
-      setErrorMsg(msg);
-    }
-  };
-  const handleResolve = async (item) => {
-    const next = !item.isResolved;
-    try {
-      await itemsService.updateItem(item.id, { isResolved: next });
-      setAllMyItems((list) =>
-        list.map((i) => (i.id === item.id ? { ...i, isResolved: next } : i))
-      );
-      setMyItems((list) =>
-        list.map((i) => (i.id === item.id ? { ...i, isResolved: next } : i))
-      );
-    } catch (err) {
-      console.error("Failed to toggle resolved", err);
-      const msg =
-        err?.message ||
-        err?.error?.message ||
-        "Failed to update resolved state";
       setErrorMsg(msg);
     }
   };
@@ -292,6 +357,16 @@ export default function MyPosts() {
           }`}
         >
           Found
+        </button>
+        <button
+          onClick={() => setFilter("Resolved")}
+          className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
+            filter === "Resolved"
+              ? "bg-gray-800 text-white border-gray-800"
+              : "bg-white text-gray600 border-gray-300 hover:border-gray-400"
+          }`}
+        >
+          Resolved
         </button>
         <div className="relative self-stretch flex items-center ml-2">
           <select

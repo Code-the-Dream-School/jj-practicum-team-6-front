@@ -23,7 +23,9 @@ export default function MyPostCard({
           className={`inline-block text-xs px-3 py-1 rounded-full font-semibold ${
             item.status === "Lost"
               ? "bg-primary text-white"
-              : "bg-success text-white"
+              : item.status === "Found"
+                ? "bg-success text-white"
+                : "bg-black text-white"
           }`}
         >
           {item.status}
@@ -45,9 +47,11 @@ export default function MyPostCard({
               className="w-full h-full object-cover rounded-xl"
             />
           ) : (
-            <div className="text-4xl w-full h-full flex items-center justify-center">
-              {item.status === "Lost" ? "📱" : "🎒"}
-            </div>
+            <img
+              src="/placeholder.svg"
+              alt="No image available"
+              className="w-full h-full object-cover rounded-xl opacity-80"
+            />
           )}
         </button>
       </div>
@@ -68,7 +72,7 @@ export default function MyPostCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onResolve();
+            onResolve && onResolve();
           }}
           className={`inline-flex items-center gap-2 whitespace-nowrap ${
             item.isResolved
@@ -76,7 +80,7 @@ export default function MyPostCard({
               : "text-gray-500 hover:text-red-600"
           }`}
           title="Toggle Resolved"
-          aria-pressed={item.isResolved}
+          aria-pressed={!!item.isResolved}
         >
           <svg
             viewBox="0 0 24 24"

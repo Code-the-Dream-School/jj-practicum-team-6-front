@@ -5,10 +5,14 @@ function getToken() {
 }
 
 async function apiFetch(path, opts = {}) {
+  const isForm =
+    typeof FormData !== "undefined" && opts.body instanceof FormData;
   const headers = {
-    "Content-Type": "application/json",
     ...(opts.headers || {}),
   };
+  if (!isForm) {
+    headers["Content-Type"] = headers["Content-Type"] || "application/json";
+  }
 
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -39,6 +43,10 @@ export async function apiGet(path) {
 
 export async function apiPost(path, body) {
   return apiFetch(path, { method: "POST", body: JSON.stringify(body) });
+}
+
+export async function apiPostForm(path, formData) {
+  return apiFetch(path, { method: "POST", body: formData });
 }
 
 export async function apiPatch(path, body) {

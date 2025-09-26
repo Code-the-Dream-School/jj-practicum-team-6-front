@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { FaMapMarkerAlt, FaImage, FaUpload } from "react-icons/fa";
 import itemsService from "../../services/itemsService";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -12,7 +12,9 @@ import categories from "../../util/categories";
 export default function EditItemPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const routedItem = location?.state?.item || null;
+  const [loading, setLoading] = useState(!routedItem);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({
@@ -23,7 +25,7 @@ export default function EditItemPage() {
   const [showMap, setShowMap] = useState(false);
   const dateRef = useRef(null);
 
-  const [itemData, setItemData] = useState(null);
+  const [itemData, setItemData] = useState(routedItem || null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -34,40 +36,77 @@ export default function EditItemPage() {
 
   useEffect(() => {
     let mounted = true;
-    itemsService
-      .getItem(id)
-      .then((data) => {
-        if (!mounted) return;
-        if (!data) {
-          setErrorMsg("Item not found");
-          setItemData(null);
-          return;
-        }
-        setItemData(data);
-        setForm({
-          title: data.title || "",
-          description: data.description || "",
-          location: data.zipCode || data.location || "",
-          date: data.dateReported ? String(data.dateReported).slice(0, 10) : "",
-          category:
-            data.category?.name ||
-            data.categoryName ||
-            categories[0] ||
-            "Other",
-        });
-      })
-      .catch((err) => {
-        console.error("getItem failed", err);
-        setErrorMsg("Failed to load item. Please try again.");
-        setItemData(null);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
+    if (routedItem) {
+      const data = routedItem;
+      setForm({
+        title: data.title || "",
+        description: data.description || "",
+        location: data.zipCode || data.location || "",
+        date: data.dateReported ? String(data.dateReported).slice(0, 10) : "",
+        category:
+          data.category?.name || data.categoryName || categories[0] || "Other",
       });
+      itemsService
+        .getItem(id)
+        .then((fresh) => {
+          if (!mounted || !fresh) return;
+          setItemData(fresh);
+          setForm({
+            title: fresh.title || "",
+            description: fresh.description || "",
+            location: fresh.zipCode || fresh.location || "",
+            date: fresh.dateReported
+              ? String(fresh.dateReported).slice(0, 10)
+              : "",
+            category:
+              fresh.category?.name ||
+              fresh.categoryName ||
+              categories[0] ||
+              "Other",
+          });
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (mounted) setLoading(false);
+        });
+    } else {
+      itemsService
+        .getItem(id)
+        .then((data) => {
+          if (!mounted) return;
+          if (!data) {
+            setErrorMsg("Item not found");
+            setItemData(null);
+            return;
+          }
+          setItemData(data);
+          setForm({
+            title: data.title || "",
+            description: data.description || "",
+            location: data.zipCode || data.location || "",
+            date: data.dateReported
+              ? String(data.dateReported).slice(0, 10)
+              : "",
+            category:
+              data.category?.name ||
+              data.categoryName ||
+              categories[0] ||
+              "Other",
+          });
+        })
+        .catch((err) => {
+          console.error("getItem failed", err);
+          setErrorMsg("Failed to load item. Please try again.");
+          setItemData(null);
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
+        });
+    }
     return () => {
       mounted = false;
     };
-  }, [id, navigate]);
+  }, [id, navigate, routedItem]);
 
   function onChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });

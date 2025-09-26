@@ -2,15 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import Button from "../ui/Button";
 import InternalNavbar from "./InternalNavbar";
-// import {
-//   FaMapMarkerAlt,
-//   FaCalendarAlt,
-//   FaImage,
-//   FaUserCircle,
-//   FaHome,
-//   FaPlusCircle,
-//   FaUpload,
-// } from "react-icons/fa";
+import ProfileMenu from "../ProfileMenu";
 
 const Header = () => {
   const location = useLocation();
@@ -20,6 +12,7 @@ const Header = () => {
   const navRefs = useRef([]);
 
   const isLandingPage = location.pathname === "/";
+  const hasToken = !!localStorage.getItem("token");
 
   const navigationItems = [
     { label: "About us", href: "#about" },
@@ -55,7 +48,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-100 py-6 sticky top-0 z-50 shadow-md backdrop-blur-sm backdrop-filter">
+    <header className="bg-white border-b border-gray-100 py-6 sticky top-0 z-[100] shadow-md backdrop-blur-sm backdrop-filter">
       <div className="max-w-6xl mx-auto px-8 grid grid-cols-3 items-center gap-8 lg:grid-cols-3 md:grid-cols-2 md:gap-6">
         {/* Logo Section - Left */}
         <Link
@@ -116,25 +109,12 @@ const Header = () => {
         )}
         {/* Auth Section - Right */}
         <div className="flex justify-end">
-          {isLandingPage ? (
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="small"
-                onClick={() => handleAuthClick("signin")}
-              >
-                Sign in
-              </Button>
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={() => handleAuthClick("signup")}
-              >
-                Sign up
-              </Button>
-            </div>
-          ) : localStorage.getItem("token") ? (
-            <InternalNavbar />
+          {hasToken ? (
+            isLandingPage ? (
+              <ProfileMenu />
+            ) : (
+              <InternalNavbar />
+            )
           ) : (
             <div className="flex items-center gap-4">
               <Button

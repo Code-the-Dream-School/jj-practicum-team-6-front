@@ -1,4 +1,4 @@
-import api from "./apiClient";
+import api, { apiPostForm } from "./apiClient";
 
 export function getAccessToken() {
   return localStorage.getItem("token") || "";
@@ -82,3 +82,30 @@ export async function updateProfile(payload) {
     throw err;
   }
 }
+
+export async function uploadAvatar(file) {
+  const fd = new FormData();
+  fd.append("avatar", file);
+  const res = await apiPostForm(`/api/v1/users/self/avatar`, fd);
+  const user = res?.data || res;
+  if (user) localStorage.setItem("user", JSON.stringify(user));
+  return user;
+}
+
+export async function deleteAvatar() {
+  const res = await api.apiDelete(`/api/v1/users/self/avatar`);
+  const user = res?.data || res;
+  if (user) localStorage.setItem("user", JSON.stringify(user));
+  return user;
+}
+
+export default {
+  getAccessToken,
+  logout,
+  signIn,
+  signUp,
+  getCurrentUser,
+  updateProfile,
+  uploadAvatar,
+  deleteAvatar,
+};

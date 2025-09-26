@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaList,
@@ -10,9 +10,13 @@ import {
   FaRegComment,
   FaRegEye,
 } from "react-icons/fa";
+import { FaFilter } from "react-icons/fa";
 import LocationMap from "../components/LocationMap";
 import ConfirmModal from "../components/ConfirmModal";
 import itemsService from "../services/itemsService";
+import categoriesList from "../util/categories";
+import categoriesApi from "../services/categoriesService";
+import CategoryDropdown from "../components/ui/CategoryDropdown";
 import { AuthContext } from "../contexts/AuthContext";
 
 export default function ItemsList() {
@@ -21,24 +25,135 @@ export default function ItemsList() {
   const [filteredItems, setFilteredItems] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [category, setCategory] = useState("");
   const [sort, setSort] = useState("Newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState("list");
   const [totalCount, setTotalCount] = useState(0);
+  const [useMyLocation, setUseMyLocation] = useState(false);
+  const [radius, setRadius] = useState(10);
+  const [zip, setZip] = useState("");
+  const [coords, setCoords] = useState({ lat: null, lng: null });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterMenuRef = useRef(null);
   const [confirmDelete, setConfirmDelete] = useState({
     open: false,
     item: null,
   });
   const [errorMsg, setErrorMsg] = useState("");
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const itemsPerPage = 8;
+  const [useMyLocationDraft, setUseMyLocationDraft] = useState(useMyLocation);
+  const [radiusDraft, setRadiusDraft] = useState(radius);
+  const [zipDraft, setZipDraft] = useState(zip);
+  const [zipCenterDraft, setZipCenterDraft] = useState(null);
+  const [categories, setCategories] = useState(categoriesList);
+  const [zipCenter, setZipCenter] = useState(null);
+
+  const applyGeoFilters = () => {
+    setUseMyLocation(useMyLocationDraft);
+    setRadius(radiusDraft);
+    setZip(zipDraft.trim());
+    setCurrentPage(1);
+    setRefreshTick((t) => t + 1);
+  };
+
+  const resetGeoDrafts = () => {
+    setUseMyLocationDraft(false);
+    setRadiusDraft(10);
+    setZipDraft("");
+  };
 
   const { currentUser } = useContext(AuthContext);
   const currentUserId = currentUser?.id || currentUser?.userId || null;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, filter, sort]);
+  }, [search, filter, sort, category]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const list = await categoriesApi.getCategories();
+        if (!mounted) return;
+        const names = (list || [])
+          .map((c) => c.name)
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+        if (names.length) setCategories(names);
+      } catch (e) {}
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Geocode applied ZIP to precise center for filtering
+  useEffect(() => {
+    const zip5 = String(zip || "")
+      .replace(/\D/g, "")
+      .slice(0, 5);
+    if (!zip5 || zip5.length < 5) {
+      setZipCenter(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`https://api.zippopotam.us/us/${zip5}`);
+        if (!res.ok) throw new Error("ZIP not found");
+        const data = await res.json();
+        const place = Array.isArray(data.places) && data.places[0];
+        const lat = place ? parseFloat(place.latitude) : NaN;
+        const lng = place ? parseFloat(place.longitude) : NaN;
+        if (!cancelled && Number.isFinite(lat) && Number.isFinite(lng)) {
+          setZipCenter([lat, lng]);
+        } else if (!cancelled) {
+          setZipCenter(null);
+        }
+      } catch (_) {
+        if (!cancelled) setZipCenter(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [zip]);
+
+  const haversineMiles = (lat1, lon1, lat2, lon2) => {
+    const R = 3958.8;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key === "lastItemUpdated") {
+        setRefreshTick((t) => t + 1);
+      }
+    }
+    function onCustom() {
+      setSort((s) => s);
+      setRefreshTick((t) => t + 1);
+    }
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("item-updated", onCustom);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("item-updated", onCustom);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -49,13 +164,22 @@ export default function ItemsList() {
       if (s === "Found") return "FOUND";
       return undefined;
     };
+    const useZipIntent = Boolean(zip && Number.isFinite(radius) && radius > 0);
     const params = {
       q: search || undefined,
-      status: filter !== "All" ? toEnum(filter) : undefined,
-      is_resolved: false,
-      page: currentPage,
-      limit: itemsPerPage,
+      page: useZipIntent ? 1 : currentPage,
+      limit: useZipIntent ? 1000 : itemsPerPage,
+      lat:
+        useMyLocation && Number.isFinite(coords.lat) ? coords.lat : undefined,
+      lng:
+        useMyLocation && Number.isFinite(coords.lng) ? coords.lng : undefined,
+      radius: useMyLocation ? radius : undefined,
+      is_resolved: filter === "Resolved" ? true : false,
     };
+    if (filter === "Lost" || filter === "Found") {
+      params.status = toEnum(filter);
+    }
+    if (category) params.category = category;
     itemsService
       .getItems(params)
       .then(({ items = [], meta = {} } = {}) => {
@@ -69,7 +193,7 @@ export default function ItemsList() {
         };
         const normalized = (items || []).map((it) => ({
           ...it,
-          status: toStatusText(it.status),
+          status: it.isResolved ? "Resolved" : toStatusText(it.status),
           imageUrl:
             it.primaryPhotoUrl ||
             (Array.isArray(it.photos) && it.photos.length
@@ -82,10 +206,67 @@ export default function ItemsList() {
               ? new Date(it.createdAt).toLocaleDateString()
               : it.date || "",
           userId: it.ownerId ?? it.userId,
-          lat: typeof it.latitude === "number" ? it.latitude : undefined,
-          lng: typeof it.longitude === "number" ? it.longitude : undefined,
+          lat: (() => {
+            const v = it.latitude;
+            if (typeof v === "number") return v;
+            const n = parseFloat(v);
+            return Number.isFinite(n) ? n : undefined;
+          })(),
+          lng: (() => {
+            const v = it.longitude;
+            if (typeof v === "number") return v;
+            const n = parseFloat(v);
+            return Number.isFinite(n) ? n : undefined;
+          })(),
+          seenCount:
+            typeof it.seenCount === "number"
+              ? it.seenCount
+              : typeof it.seen === "number"
+                ? it.seen
+                : 0,
+          category:
+            typeof it.category === "object" && it.category?.name
+              ? it.category.name
+              : it.categoryName || it.category || "",
+          zipCode: it.zipCode || it.zip || "",
         }));
-        let sorted = [...normalized];
+        const categoryFiltered = category
+          ? normalized.filter(
+              (i) => (i.category || "").toLowerCase() === category.toLowerCase()
+            )
+          : normalized;
+        const zipFiltered = zip
+          ? (() => {
+              const base = String(zip).replace(/\D/g, "").slice(0, 5);
+              if (!base) return categoryFiltered;
+              if (
+                Array.isArray(zipCenter) &&
+                zipCenter.length === 2 &&
+                Number.isFinite(radius) &&
+                radius > 0
+              ) {
+                const [zcLat, zcLng] = zipCenter;
+                return categoryFiltered.filter((i) => {
+                  const hasCoords =
+                    Number.isFinite(i.lat) && Number.isFinite(i.lng);
+                  if (hasCoords) {
+                    const d = haversineMiles(zcLat, zcLng, i.lat, i.lng);
+                    return d <= radius + 1e-9;
+                  }
+                  const itemZip = String(i.zipCode || "")
+                    .replace(/\D/g, "")
+                    .slice(0, 5);
+                  const loc = String(i.location || "");
+                  return (
+                    (itemZip && itemZip === base) ||
+                    (base && loc.includes(base))
+                  );
+                });
+              }
+              return categoryFiltered;
+            })()
+          : categoryFiltered;
+        let sorted = [...zipFiltered];
         if (sort === "Name")
           sorted.sort((a, b) => a.title.localeCompare(b.title));
         if (sort === "Oldest")
@@ -95,7 +276,9 @@ export default function ItemsList() {
 
         setAllItems(sorted);
         setFilteredItems(sorted);
-        setTotalCount(meta.total || sorted.length || 0);
+        const computedTotal =
+          category || zip ? sorted.length : meta.total || sorted.length || 0;
+        setTotalCount(computedTotal);
       })
       .catch((err) => {
         console.warn("Failed to load items", err);
@@ -107,10 +290,90 @@ export default function ItemsList() {
     return () => {
       mounted = false;
     };
-  }, [search, filter, sort, currentPage]);
+  }, [
+    search,
+    filter,
+    sort,
+    category,
+    currentPage,
+    refreshTick,
+    useMyLocation,
+    radius,
+    zip,
+    zipCenter,
+    coords.lat,
+    coords.lng,
+  ]);
+  useEffect(() => {
+    if (useMyLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          setUseMyLocation(false);
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, [useMyLocation]);
+
+  useEffect(() => {
+    if (useMyLocationDraft && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, [useMyLocationDraft]);
+
+  useEffect(() => {
+    const zip5 = String(zipDraft || "")
+      .replace(/\D/g, "")
+      .slice(0, 5);
+    if (!zip5 || zip5.length < 5) {
+      setZipCenterDraft(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`https://api.zippopotam.us/us/${zip5}`);
+        if (!res.ok) throw new Error("ZIP not found");
+        const data = await res.json();
+        const place = Array.isArray(data.places) && data.places[0];
+        const lat = place ? parseFloat(place.latitude) : NaN;
+        const lng = place ? parseFloat(place.longitude) : NaN;
+        if (!cancelled && Number.isFinite(lat) && Number.isFinite(lng)) {
+          setZipCenterDraft([lat, lng]);
+        } else if (!cancelled) {
+          setZipCenterDraft(null);
+        }
+      } catch (_) {
+        if (!cancelled) setZipCenterDraft(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [zipDraft]);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!isFilterOpen) return;
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target)) {
+        setIsFilterOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [isFilterOpen]);
 
   const handleEdit = (item) => {
-    navigate(`/items/edit/${item.id}`);
+    navigate(`/items/edit/${item.id}`, { state: { item } });
   };
 
   const handleDelete = async (item) => {
@@ -135,14 +398,12 @@ export default function ItemsList() {
       {/* Main Container */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <h1 className="font-display text-4xl font-bold text-ink">
-            List of Lost/Found Items
-          </h1>
+        <div className="flex flex-col items-center text-center mb-6 gap-4">
+          <h1 className="font-display text-5xl font-bold text-ink">Items</h1>
         </div>
 
         {/* View Toggle */}
-        <div className="flex gap-3 mb-8">
+        <div className="flex justify-center gap-3 mb-6">
           <button
             onClick={() => setViewMode("list")}
             className={`px-6 py-3 rounded-full flex items-center gap-2 font-medium text-sm transition-all duration-200 ${
@@ -168,9 +429,9 @@ export default function ItemsList() {
         </div>
 
         {/* Search and Controls */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8 items-center">
+        <div className="flex flex-col items-center gap-4 mb-8">
           {/* Search Input */}
-          <div className="flex-1">
+          <div className="w-full max-w-2xl">
             <input
               type="text"
               placeholder="Search by name, description or zipcode"
@@ -179,7 +440,6 @@ export default function ItemsList() {
               className="w-full bg-gray-100 px-4 py-3 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-primary font-body text-ink placeholder:text-gray-400"
             />
           </div>
-
           {/* Filter Buttons */}
           <div className="flex items-center gap-2">
             <button
@@ -212,35 +472,120 @@ export default function ItemsList() {
             >
               Found
             </button>
-            <button style={{ display: "none" }} />
+            <div
+              className="relative inline-block ml-2"
+              ref={filterMenuRef}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setIsFilterOpen(false);
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen((v) => !v)}
+                className="inline-flex items-center gap-2 text-sm text-gray600 hover:text-ink"
+                aria-haspopup="menu"
+                aria-expanded={isFilterOpen}
+              >
+                <FaFilter className="text-gray-500" />
+                <span>Filter</span>
+              </button>
+              {isFilterOpen && (
+                <div
+                  role="menu"
+                  className="absolute left-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg z-50 p-2"
+                >
+                  {[
+                    { value: "Newest", label: "Newest" },
+                    { value: "Oldest", label: "Oldest" },
+                    { value: "Name", label: "Name (A→Z)" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      role="menuitem"
+                      onClick={() => {
+                        setSort(opt.value);
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${sort === opt.value ? "bg-gray-50 text-ink" : "hover:bg-gray-50 text-gray-700"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="relative self-stretch flex items-center">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-full px-4 py-2 pr-8 text-sm font-medium text-gray600 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-            >
-              <option value="Newest">Sort by: Newest</option>
-              <option value="Oldest">Oldest</option>
-              <option value="Name">Name</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg
-                className="w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+          <div className="flex items-center flex-wrap justify-center gap-3">
+            <CategoryDropdown
+              value={category || ""}
+              options={categories}
+              placeholder="All categories"
+              allOption={{ label: "All categories", value: "" }}
+              onChange={(val) => setCategory(val)}
+              widthClass="min-w-[240px]"
+              buttonClassName="px-4 py-2 rounded-full border border-gray-300 bg-white"
+              menuClassName=""
+            />
+            {/* Geo filters */}
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={useMyLocationDraft}
+                onChange={(e) => setUseMyLocationDraft(e.target.checked)}
+              />
+              Use my location
+            </label>
+            {/* ZIP input */}
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={10}
+              placeholder="e.g. 06611"
+              value={zipDraft}
+              onChange={(e) =>
+                setZipDraft(e.target.value.replace(/[^0-9-]/g, ""))
+              }
+              disabled={useMyLocationDraft}
+              className={`bg-white border border-gray-300 rounded-full px-4 py-2 text-sm font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary ${
+                useMyLocationDraft ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              aria-label="ZIP code"
+            />
+            {/* Radius slider */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Radius</span>
+              <input
+                type="range"
+                min={0}
+                max={50}
+                step={5}
+                value={radiusDraft}
+                onChange={(e) => setRadiusDraft(Number(e.target.value))}
+                className="accent-primary"
+                aria-label="Radius (miles)"
+                disabled={!(useMyLocationDraft || zipDraft)}
+              />
+              <span className="text-sm text-gray-600 w-10 text-right">
+                {radiusDraft} mi
+              </span>
             </div>
+            {/* Reset/Apply */}
+            <button
+              type="button"
+              onClick={resetGeoDrafts}
+              className="px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium hover:bg-gray-50"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={applyGeoFilters}
+              className="px-5 py-2 rounded-full bg-ink text-white text-sm font-medium hover:opacity-90"
+            >
+              Apply
+            </button>
           </div>
         </div>
 
@@ -273,7 +618,9 @@ export default function ItemsList() {
                         className={`inline-block text-xs px-3 py-1 rounded-full font-semibold ${
                           item.status === "Lost"
                             ? "bg-primary text-white"
-                            : "bg-success text-white"
+                            : item.status === "Found"
+                              ? "bg-success text-white"
+                              : "bg-black text-white"
                         }`}
                       >
                         {item.status}
@@ -285,7 +632,7 @@ export default function ItemsList() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/items/${item.id}`);
+                          navigate(`/items/${item.id}`, { state: { item } });
                         }}
                         className="w-full h-full p-0 m-0 text-left rounded-xl overflow-hidden"
                         aria-label={`Open ${item.title}`}
@@ -324,9 +671,9 @@ export default function ItemsList() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/items/${item.id}`);
+                          navigate(`/items/${item.id}`, { state: { item } });
                         }}
-                        className="text-sm text-ink hover:underline inline-flex items-center gap-1"
+                        className="text-sm text-ink inline-flex items-center gap-1"
                         aria-label="Open item details"
                       >
                         More <span aria-hidden>→</span>
@@ -334,16 +681,21 @@ export default function ItemsList() {
                       <div className="flex items-center gap-4 text-sm text-gray-700">
                         <span className="inline-flex items-center gap-1">
                           <FaRegComment className="text-gray-500" />
-                          {typeof item.commentsCount === "number"
-                            ? item.commentsCount
-                            : Array.isArray(item.comments)
-                              ? item.comments.length
-                              : 0}
+                          {(() => {
+                            const cnt =
+                              typeof item.commentsCount === "number"
+                                ? item.commentsCount
+                                : Array.isArray(item.comments)
+                                  ? item.comments.length
+                                  : 0;
+                            return cnt;
+                          })()}
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <FaRegEye className="text-gray-500" />
-                          {typeof item.seen === "number" ? item.seen : 0}
-                          <span className="ml-1 hidden sm:inline">Seen it</span>
+                          {typeof item.seenCount === "number"
+                            ? item.seenCount
+                            : 0}
                         </span>
                       </div>
                     </div>
@@ -426,7 +778,43 @@ export default function ItemsList() {
         ) : (
           /* Map View */
           <div className="h-[600px] w-full rounded-2xl overflow-hidden border border-gray-200 shadow-lg">
-            <LocationMap mode="display" items={filteredItems} />
+            {(() => {})()}
+            <LocationMap
+              mode="display"
+              items={filteredItems}
+              center={
+                useMyLocationDraft &&
+                Number.isFinite(coords.lat) &&
+                Number.isFinite(coords.lng)
+                  ? [coords.lat, coords.lng]
+                  : Array.isArray(zipCenterDraft)
+                    ? zipCenterDraft
+                    : Array.isArray(zipCenter)
+                      ? zipCenter
+                      : useMyLocation &&
+                          Number.isFinite(coords.lat) &&
+                          Number.isFinite(coords.lng)
+                        ? [coords.lat, coords.lng]
+                        : undefined
+              }
+              radiusMiles={
+                useMyLocationDraft || zipDraft
+                  ? radiusDraft
+                  : useMyLocation
+                    ? radius
+                    : zip
+                      ? radius
+                      : undefined
+              }
+              showCenterMarker={Boolean(
+                (useMyLocationDraft &&
+                  Number.isFinite(coords.lat) &&
+                  Number.isFinite(coords.lng)) ||
+                  Array.isArray(zipCenterDraft) ||
+                  Array.isArray(zipCenter) ||
+                  useMyLocation
+              )}
+            />
           </div>
         )}
       </div>

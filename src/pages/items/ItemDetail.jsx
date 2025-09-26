@@ -1,9 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import LocationMap from "../../components/LocationMap";
 import ItemGallery from "../../components/items/ItemGallery";
 import CommentsSection from "../../components/items/CommentsSection";
-import Modal from "../../components/Modal";
+import ConfirmModal from "../../components/ConfirmModal";
+import OwnerHeader from "../../components/items/OwnerHeader";
+import ItemMiniMap from "../../components/items/ItemMiniMap";
+import MetaBar from "../../components/items/MetaBar";
 import itemsService from "../../services/itemsService";
 import messagesService from "../../services/messagesService";
 import commentsService from "../../services/commentsService";
@@ -15,15 +18,31 @@ import {
   FaRegEye,
   FaRegComment,
   FaTrash,
+  FaEdit,
+  FaCheckCircle,
 } from "react-icons/fa";
+import { FaRegCircle } from "react-icons/fa";
 
 import { AuthContext } from "../../contexts/AuthContext";
 
 export default function ItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [item, setItem] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const routedItem = location?.state?.item || null;
+  const dateOverrideRaw = location?.state && location.state.dateOverride;
+  let dateOverride = null;
+  try {
+    const ls = localStorage.getItem("itemDateOverrides");
+    const map = ls ? JSON.parse(ls) : {};
+    const candidate = map && id ? map[id] : null;
+    const pick = dateOverrideRaw || candidate || null;
+    dateOverride = pick ? new Date(pick) : null;
+  } catch (e) {
+    dateOverride = dateOverrideRaw ? new Date(dateOverrideRaw) : null;
+  }
+  const [item, setItem] = useState(routedItem || null);
+  const [loading, setLoading] = useState(!routedItem);
 
   const { currentUser } = useContext(AuthContext);
   const storageUser = currentUser || {};
@@ -55,64 +74,98 @@ export default function ItemDetail() {
 
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
-  const baseSeen = typeof item?.seen === "number" ? item.seen : 8;
+  const baseSeen = typeof item?.seenCount === "number" ? item.seenCount : 0;
   const [iHaveSeen, setIHaveSeen] = useState(false);
   const [seenMeta, setSeenMeta] = useState({});
   const [seenList, setSeenList] = useState([]);
   const [mySeenId, setMySeenId] = useState(null);
-  const seenCount = seenMeta?.count || seenList?.length || baseSeen;
-  const [chatModalOpen, setChatModalOpen] = useState(false);
-  const [chatMessage, setChatMessage] = useState("");
-  const [creatingThread, setCreatingThread] = useState(false);
+  const [seenLoaded, setSeenLoaded] = useState(false);
+  const seenCount = seenLoaded
+    ? Array.isArray(seenList)
+      ? seenList.length
+      : baseSeen
+    : baseSeen;
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const commentsCountDisplay = commentsLoaded
+    ? comments.length
+    : typeof item?.commentsCount === "number"
+      ? item.commentsCount
+      : comments.length;
   const [errorMsg, setErrorMsg] = useState("");
+  const myId = storageUser?.id || storageUser?.userId;
+  const isOwner = myId && item?.userId && String(item.userId) === String(myId);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    itemsService
-      .getItem(id)
-      .then((data) => {
-        if (!mounted) return;
-        if (!data) return setItem(null);
-        const toStatusText = (s) => {
-          const x = (s || "").toString().toUpperCase();
-          if (x === "LOST") return "Lost";
-          if (x === "FOUND") return "Found";
-          if (x === "RESOLVED") return "Resolved";
-          return s || "Lost";
-        };
-        const normalized = {
-          ...data,
-          status: toStatusText(data.status),
-          imageUrl:
-            data.primaryPhotoUrl ||
-            (Array.isArray(data.photos) && data.photos.length
-              ? data.photos[0].url
-              : ""),
-          location: data.zipCode || data.location || "",
-          date: data.dateReported
+    const toStatusText = (s) => {
+      const x = (s || "").toString().toUpperCase();
+      if (x === "LOST") return "Lost";
+      if (x === "FOUND") return "Found";
+      if (x === "RESOLVED") return "Resolved";
+      return s || "Lost";
+    };
+    const normalize = (data) => {
+      if (!data) return null;
+      const baseStatus = toStatusText(data.status);
+      return {
+        ...data,
+        status: data.isResolved ? "Resolved" : baseStatus,
+        baseStatus,
+        imageUrl:
+          data.primaryPhotoUrl ||
+          (Array.isArray(data.photos) && data.photos.length
+            ? data.photos[0].url
+            : ""),
+        location: data.zipCode || data.location || "",
+        date: dateOverride
+          ? dateOverride.toLocaleDateString()
+          : data.dateReported
             ? new Date(data.dateReported).toLocaleDateString()
             : data.createdAt
               ? new Date(data.createdAt).toLocaleDateString()
               : data.date || "",
-          userId: data.ownerId ?? data.userId,
-          lat: typeof data.latitude === "number" ? data.latitude : undefined,
-          lng: typeof data.longitude === "number" ? data.longitude : undefined,
-        };
-        setItem(normalized);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setItem(null);
-      })
-      .finally(() => {
-        if (!mounted) return;
-        setLoading(false);
-      });
+        userId: data.ownerId ?? data.userId,
+        lat: typeof data.latitude === "number" ? data.latitude : undefined,
+        lng: typeof data.longitude === "number" ? data.longitude : undefined,
+      };
+    };
+
+    let mounted = true;
+    if (routedItem) {
+      setItem(normalize(routedItem));
+      itemsService
+        .getItem(id)
+        .then((fresh) => {
+          if (!mounted) return;
+          setItem(normalize(fresh));
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!mounted) return;
+          setLoading(false);
+        });
+    } else {
+      setLoading(true);
+      itemsService
+        .getItem(id)
+        .then((data) => {
+          if (!mounted) return;
+          setItem(normalize(data));
+        })
+        .catch(() => {
+          if (!mounted) return;
+          setItem(null);
+        })
+        .finally(() => {
+          if (!mounted) return;
+          setLoading(false);
+        });
+    }
+
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, routedItem]);
 
   useEffect(() => {
     if (!item?.id) return;
@@ -130,9 +183,11 @@ export default function ItemDetail() {
           (a, b) => ts(b.createdAt) - ts(a.createdAt)
         );
         setComments(sorted);
+        setCommentsLoaded(true);
       })
       .catch((err) => {
         console.warn("Failed to load comments", err);
+        setCommentsLoaded(true);
       });
 
     seenService
@@ -142,6 +197,7 @@ export default function ItemDetail() {
         const list = seen || [];
         setSeenList(list);
         setSeenMeta(meta || {});
+        setSeenLoaded(true);
         try {
           const uid = resolveUserId();
           if (uid) {
@@ -162,6 +218,7 @@ export default function ItemDetail() {
       })
       .catch((err) => {
         console.warn("Failed to load seen marks", err);
+        setSeenLoaded(true);
       });
 
     return () => {
@@ -222,8 +279,6 @@ export default function ItemDetail() {
       });
   };
 
-  // key handling moved into CommentsSection
-
   function timeAgo(tsInput) {
     const ts = typeof tsInput === "number" ? tsInput : Date.parse(tsInput);
     const base = Number.isFinite(ts) ? ts : Date.now();
@@ -253,6 +308,24 @@ export default function ItemDetail() {
         await seenService.unmarkSeen(item.id, prevMySeenId);
         setSeenList((s) => s.filter((x) => x.id !== prevMySeenId));
         setMySeenId(null);
+        try {
+          localStorage.setItem(
+            "lastItemUpdated",
+            JSON.stringify({ id: item.id, at: Date.now(), seenDelta: -1 })
+          );
+        } catch {}
+        try {
+          window.dispatchEvent(
+            new CustomEvent("item-updated", {
+              detail: { id: item.id, seenDelta: -1 },
+            })
+          );
+        } catch {}
+        setItem((prev) =>
+          prev && typeof prev.seenCount === "number"
+            ? { ...prev, seenCount: Math.max(0, prev.seenCount - 1) }
+            : prev
+        );
       } catch (err) {
         setIHaveSeen(true);
         setMySeenId(prevMySeenId);
@@ -278,6 +351,24 @@ export default function ItemDetail() {
         if (created) {
           setSeenList((s) => [created, ...s.filter((m) => m.id !== temp.id)]);
           setMySeenId(created.id);
+          try {
+            localStorage.setItem(
+              "lastItemUpdated",
+              JSON.stringify({ id: item.id, at: Date.now(), seenDelta: +1 })
+            );
+          } catch {}
+          try {
+            window.dispatchEvent(
+              new CustomEvent("item-updated", {
+                detail: { id: item.id, seenDelta: +1 },
+              })
+            );
+          } catch {}
+          setItem((prev) =>
+            prev && typeof prev.seenCount === "number"
+              ? { ...prev, seenCount: prev.seenCount + 1 }
+              : prev
+          );
         } else {
           const { seen = [], meta = {} } = await seenService.listSeen(item.id);
           setSeenList(seen || []);
@@ -349,6 +440,21 @@ export default function ItemDetail() {
     }
   };
 
+  const ResolvedIconButton = ({ checked, onToggle }) => (
+    <button
+      type="button"
+      onClick={() => onToggle(!checked)}
+      aria-pressed={!!checked}
+      aria-label="Toggle resolved"
+      title="Resolved"
+      className={`inline-flex items-center justify-center p-1 ${
+        checked ? "text-black" : "text-gray-600 hover:text-ink"
+      }`}
+    >
+      {checked ? <FaCheckCircle size={18} /> : <FaRegCircle size={18} />}
+    </button>
+  );
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
       <div className="flex flex-col lg:flex-row gap-8">
@@ -368,49 +474,19 @@ export default function ItemDetail() {
 
         {/* Right: Details */}
         <div className="lg:w-1/2">
-          <div className="flex items-center gap-4 mb-4">
-            {owner && owner.avatarUrl ? (
-              <img
-                src={owner.avatarUrl}
-                alt={owner.firstName || "User"}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
-                {owner && (owner.firstName || owner.name)
-                  ? (owner.firstName || owner.name)[0]
-                  : "U"}
-              </div>
-            )}
-            <div>
-              <div className="font-semibold">
-                {(owner && (owner.firstName || owner.name)) || "User"}{" "}
-                {owner && owner.lastName ? owner.lastName : ""}
-              </div>
-              <div className="text-sm text-gray-500 flex items-center gap-3">
-                <span className="flex items-center gap-2">
-                  <FaMapMarkerAlt className="text-gray-400" />
-                  <span>
-                    {item.location ||
-                      (owner &&
-                        (owner.zipCode || owner.zipcode || owner.city)) ||
-                      "Unknown location"}
-                  </span>
-                </span>
-                <span className="text-gray-300">·</span>
-                <span className="flex items-center gap-2">
-                  <FaRegCalendarAlt className="text-gray-400" />
-                  <span>{new Date().toLocaleDateString()}</span>
-                </span>
-              </div>
-            </div>
-          </div>
+          <OwnerHeader owner={owner} item={item} />
 
           <div className="flex items-center gap-4 mb-4">
             <h1 className="font-display text-4xl font-bold">{item.title}</h1>
             {item.status && (
               <span
-                className={`text-sm font-semibold px-3 py-1 rounded-full ${item.status === "Lost" ? "bg-primary text-white" : "bg-success text-white"}`}
+                className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                  item.status === "Lost"
+                    ? "bg-primary text-white"
+                    : item.status === "Found"
+                      ? "bg-success text-white"
+                      : "bg-black text-white"
+                }`}
                 aria-hidden="true"
               >
                 {item.status}
@@ -422,119 +498,151 @@ export default function ItemDetail() {
           </p>
 
           <div className="mb-6">
-            <div className="w-full h-40 rounded-lg overflow-hidden border border-gray-200">
-              <LocationMap
-                mode="display"
-                items={[
-                  {
-                    ...item,
-                    lat: typeof item.lat === "number" ? item.lat : undefined,
-                    lng: typeof item.lng === "number" ? item.lng : undefined,
-                  },
-                ]}
+            <ItemMiniMap item={item} />
+          </div>
+
+          {/* Meta/Actions row */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-6">
+              {/* Owner: Resolved control */}
+              {isOwner &&
+                (() => {
+                  const onToggle = async (next) => {
+                    try {
+                      await itemsService.updateItem(item.id, {
+                        isResolved: next,
+                      });
+                      setItem((prev) => {
+                        const restored = prev.baseStatus
+                          ? prev.baseStatus
+                          : prev.status === "Resolved"
+                            ? "Lost"
+                            : prev.status;
+                        try {
+                          localStorage.setItem(
+                            "lastItemUpdated",
+                            JSON.stringify({
+                              id: prev.id,
+                              at: Date.now(),
+                              isResolved: next,
+                            })
+                          );
+                        } catch {}
+                        try {
+                          window.dispatchEvent(
+                            new CustomEvent("item-updated", {
+                              detail: { id: prev.id, isResolved: next },
+                            })
+                          );
+                        } catch {}
+                        return {
+                          ...prev,
+                          isResolved: next,
+                          status: next ? "Resolved" : restored,
+                        };
+                      });
+                    } catch (err) {
+                      setErrorMsg(
+                        err?.message || "Failed to update resolved state"
+                      );
+                    }
+                  };
+
+                  return (
+                    <div className="inline-flex items-center select-none">
+                      <ResolvedIconButton
+                        checked={!!item.isResolved}
+                        onToggle={onToggle}
+                      />
+                      <span
+                        className="ml-1 text-sm text-gray-700 cursor-pointer"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => onToggle(!item.isResolved)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onToggle(!item.isResolved);
+                          }
+                        }}
+                      >
+                        Resolved
+                      </span>
+                    </div>
+                  );
+                })()}
+
+              {/* Non-owner: chat CTA first */}
+              {!isOwner && (
+                <button
+                  onClick={async () => {
+                    if (!item?.id) return;
+                    setErrorMsg("");
+                    try {
+                      const created = await messagesService.createThread({
+                        itemId: item.id,
+                      });
+                      const threadId =
+                        created?.id || created?.threadId || created?.data?.id;
+                      navigate(
+                        threadId
+                          ? `/threads?tid=${encodeURIComponent(threadId)}`
+                          : "/threads"
+                      );
+                    } catch (err) {
+                      setErrorMsg(err?.message || "Failed to start chat");
+                    }
+                  }}
+                  className="bg-primary text-white px-4 py-2 rounded-full inline-flex items-center gap-2"
+                  aria-label="I found this item"
+                >
+                  <FaPaperPlane className="text-white" />
+                  <span>I Found this item</span>
+                </button>
+              )}
+              <MetaBar
+                isOwner={isOwner}
+                commentsCountDisplay={commentsCountDisplay}
+                seenCount={seenCount}
+                iHaveSeen={iHaveSeen}
+                toggleSeen={toggleSeen}
+                renderActions={false}
               />
             </div>
+            <MetaBar
+              isOwner={isOwner}
+              onEdit={() =>
+                navigate(`/items/edit/${item.id}`, { state: { item } })
+              }
+              onDelete={() => setConfirmDelete(true)}
+              renderCounts={false}
+            />
           </div>
 
-          <div className="flex items-center gap-4 mb-8">
-            <div className="flex gap-3">
-              <button
-                onClick={() => setChatModalOpen(true)}
-                className="bg-primary text-white px-4 py-3 rounded-full flex items-center justify-center gap-2 min-w-[180px]"
-                aria-label="I found this item"
-              >
-                <FaPaperPlane className="text-white" />
-                <span>I Found this item</span>
-              </button>
-
-              <button
-                onClick={toggleSeen}
-                className={`px-4 py-3 rounded-full border flex items-center justify-center gap-2 min-w-[180px] ${iHaveSeen ? "bg-black text-white border-black" : "bg-white text-gray-700 border-gray-200"}`}
-                aria-pressed={iHaveSeen}
-                aria-label={iHaveSeen ? "Marked seen" : "Mark as seen"}
-              >
-                <FaRegEye />
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{seenCount}</span>
-                  <span className="text-sm">Seen it</span>
-                </div>
-              </button>
+          {/* Inline error banner for actions */}
+          {errorMsg && (
+            <div className="mb-6 text-sm rounded-lg bg-red-50 text-red-700 px-3 py-2 border border-red-200">
+              {errorMsg}
             </div>
-            {errorMsg && (
-              <div className="ml-auto text-sm rounded-lg bg-red-50 text-red-700 px-3 py-2 border border-red-200">
-                {errorMsg}
-              </div>
-            )}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <FaRegComment className="text-gray-400" />
-              <span>{comments.length} comments</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Chat Modal (overlays map controls) */}
-      <Modal
-        open={chatModalOpen}
-        onClose={() => setChatModalOpen(false)}
-        title="Message the owner"
-        footer={
-          <>
-            <button
-              onClick={() => setChatModalOpen(false)}
-              className="px-4 py-2 border rounded-full"
-            >
-              Close
-            </button>
-            <button
-              onClick={async () => {
-                if (!item?.id) return;
-                setCreatingThread(true);
-                try {
-                  const created = await messagesService.createThread({
-                    itemId: item.id,
-                  });
-                  const threadId =
-                    created?.id || created?.threadId || created?.data?.id;
-                  if (threadId && chatMessage.trim()) {
-                    try {
-                      await messagesService.postMessage(threadId, {
-                        body: chatMessage.trim(),
-                      });
-                    } catch (e) {}
-                  }
-                  setChatModalOpen(false);
-                  setChatMessage("");
-                  if (threadId) {
-                    navigate(`/threads?tid=${encodeURIComponent(threadId)}`);
-                  } else {
-                    navigate("/threads");
-                  }
-                } catch (err) {
-                  setErrorMsg(err?.message || "Failed to start chat");
-                } finally {
-                  setCreatingThread(false);
-                }
-              }}
-              className="px-4 py-2 bg-primary text-white rounded-full disabled:opacity-60"
-              disabled={creatingThread}
-            >
-              {creatingThread ? "Starting..." : "Start chat"}
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm text-gray-700 mb-4">
-          Send a short message to the owner to let them know you found this
-          item.
-        </p>
-        <textarea
-          className="w-full border rounded-lg p-3 mb-2"
-          placeholder={`Hi, I may have found your ${item.title}.`}
-          value={chatMessage}
-          onChange={(e) => setChatMessage(e.target.value)}
-        />
-      </Modal>
+      {/* Confirm delete */}
+      <ConfirmModal
+        open={confirmDelete}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          setConfirmDelete(false);
+          try {
+            await itemsService.deleteItem(item.id);
+            navigate("/items/list");
+          } catch (err) {
+            setErrorMsg(err?.message || "Failed to delete item");
+          }
+        }}
+        text={`Delete "${item.title}"?`}
+      />
     </div>
   );
 }
