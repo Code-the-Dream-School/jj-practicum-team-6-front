@@ -56,7 +56,7 @@ export default function ThreadList({
                 item.title?.toLowerCase().includes("lost") ||
                 thread.type === "lost";
               const status = isLost ? "Lost" : "Found";
-              const photo = item.primaryPhotoUrl || "/placeholder.png";
+              const photo = item.primaryPhotoUrl || "/placeholder.svg";
               const lastMsg =
                 (thread.messages &&
                   thread.messages[thread.messages.length - 1]) ||

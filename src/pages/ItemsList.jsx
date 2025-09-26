@@ -644,9 +644,12 @@ export default function ItemsList() {
                             className="w-full h-full object-cover rounded-xl"
                           />
                         ) : (
-                          <div className="text-4xl w-full h-full flex items-center justify-center">
-                            {item.status === "Lost" ? "📱" : "🎒"}
-                          </div>
+                          <img
+                            src="/placeholder.svg"
+                            alt="No image available"
+                            className="w-full h-full object-cover rounded-xl opacity-80"
+                            loading="lazy"
+                          />
                         )}
                       </button>
                     </div>
