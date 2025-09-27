@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import ThreadList from "../components/ThreadList";
 import MessageInput from "../components/MessageInput";
 import ReportModal from "../components/ReportModal";
@@ -18,7 +18,10 @@ export default function MessagesPage() {
   // URL / selection
   const { search } = useLocation();
   const navigate = useNavigate();
-  const threadFromUrl = useMemo(() => new URLSearchParams(search).get("thread"), [search]);
+  const threadFromUrl = useMemo(() => {
+    const sp = new URLSearchParams(search);
+    return sp.get("thread") || sp.get("tid"); // accept both
+  }, [search]);
   const [selectedId, setSelectedId] = useState(null);
 
   // Messages
@@ -60,31 +63,35 @@ export default function MessagesPage() {
 
   function setThreadInUrl(id, { replace = false } = {}) {
     const q = new URLSearchParams(search);
-    if (id) q.set("thread", id);
-    else q.delete("thread");
+    if (id) {
+      q.set("thread", id);
+      q.delete("tid"); // normalize alias
+    } else {
+      q.delete("thread");
+      q.delete("tid");
+    }
     const qs = q.toString();
     navigate({ search: qs ? `?${qs}` : "" }, { replace });
   }
 
   // Report modal state
-const [showReport, setShowReport] = useState(false);
-const [reportText, setReportText] = useState("");
-const [reportSent, setReportSent] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportText, setReportText] = useState("");
+  const [reportSent, setReportSent] = useState(false);
 
-function openReport() {
-  setReportText("");
-  setReportSent(false);
-  setShowReport(true);
-}
-function closeReport() {
-  setShowReport(false);
-}
-function submitReport(e) {
-  e.preventDefault();
-  setReportSent(true);
-  setTimeout(() => setShowReport(false), 1200);
-}
-
+  function openReport() {
+    setReportText("");
+    setReportSent(false);
+    setShowReport(true);
+  }
+  function closeReport() {
+    setShowReport(false);
+  }
+  function submitReport(e) {
+    e.preventDefault();
+    setReportSent(true);
+    setTimeout(() => setShowReport(false), 1200);
+  }
 
   // Load threads
   useEffect(() => {
@@ -278,12 +285,20 @@ function submitReport(e) {
                 alt={selectedThread?.otherUser ? otherPartyName(selectedThread) : "User"}
                 size={32}
               />
-              <div className="text-[14px] font-semibold">
+              <div className="text-[14px] font-semibold flex items-center gap-2">
                 {selectedThread?.otherUser
                   ? otherPartyName(selectedThread)
                   : hasThreads
                   ? "Select a conversation"
                   : "No conversations yet"}
+                {(selectedThread?.itemId || selectedThread?.item?.id) ? (
+                  <Link
+                    to={`/items/${encodeURIComponent(selectedThread.itemId || selectedThread.item.id)}`}
+                    className="text-xs underline hover:no-underline text-gray-600"
+                  >
+                    View item
+                  </Link>
+                ) : null}
               </div>
             </div>
 
@@ -344,8 +359,6 @@ function submitReport(e) {
             setReportText={setReportText}
             reportSent={reportSent}
           />
-
-
         </section>
       </div>
     </div>

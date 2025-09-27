@@ -30,24 +30,29 @@ export default function ThreadList({ threads = [], selectedId, loading, error, o
             {threads.map((t) => {
               const item = t.item || {};
 
+              // статус: item.status -> t.type -> по заголовку
               const rawStatus =
-                item.status || t.type || (item.title || "").toLowerCase().includes("lost") ? "LOST" : "";
+                item.status ||
+                t.type ||
+                ((item.title || "").toLowerCase().includes("lost") ? "LOST" : "");
 
               const status =
-                rawStatus === "FOUND" || rawStatus?.toLowerCase() === "found"
+                String(rawStatus).toLowerCase() === "found"
                   ? "Found"
-                  : rawStatus === "LOST" || rawStatus?.toLowerCase() === "lost"
+                  : String(rawStatus).toLowerCase() === "lost"
                   ? "Lost"
                   : "";
 
               const titleLine = [status, item.title].filter(Boolean).join(": ") || "Conversation";
-          
+
+              // превью: lastMessage, иначе последний из messages, иначе плейсхолдер
               const preview =
                 (t.lastMessage?.body || t.lastMessage?.text || "").trim() ||
-                (Array.isArray(t.messages) && (t.messages.at(-1)?.body || t.messages.at(-1)?.text || "").trim()) ||
+                (Array.isArray(t.messages) &&
+                  (t.messages.at(-1)?.body || t.messages.at(-1)?.text || "").trim()) ||
                 "No messages yet";
 
-              const thumb = item.primaryPhotoUrl;
+              const thumb = item.primaryPhotoUrl || null;
 
               return (
                 <li key={t.id}>

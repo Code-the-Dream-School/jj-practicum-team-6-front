@@ -22,7 +22,6 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { FaRegCircle } from "react-icons/fa";
-
 import { AuthContext } from "../../contexts/AuthContext";
 
 export default function ItemDetail() {
@@ -385,18 +384,6 @@ export default function ItemDetail() {
         }
       } catch (err) {
         console.error("markSeen error:", err);
-        try {
-          if (err && typeof err === "object") {
-            console.error("err keys:", Object.keys(err));
-            console.error("err json:", err);
-            if (err?.status) console.error("status:", err.status);
-            if (err?.error) console.error("error:", err.error);
-            if (err?.message) console.error("message:", err.message);
-            if (err?.data) console.error("data:", err.data);
-          }
-        } catch (e) {
-          console.error("failed to stringify error", e);
-        }
         setSeenList(prev);
         setIHaveSeen(false);
         setMySeenId(null);
@@ -547,7 +534,6 @@ export default function ItemDetail() {
                       );
                     }
                   };
-
                   return (
                     <div className="inline-flex items-center select-none">
                       <ResolvedIconButton
@@ -572,25 +558,67 @@ export default function ItemDetail() {
                   );
                 })()}
 
-              {/* Non-owner: chat CTA first */}
+              {/* Non-owner: chat CTA */}
               {!isOwner && (
                 <button
                   onClick={async () => {
                     if (!item?.id) return;
                     setErrorMsg("");
+
+                    const participantId =
+                      (typeof resolveUserId === "function" && resolveUserId()) ||
+                      storageUser?.id ||
+                      storageUser?.userId;
+
+                    if (!participantId) {
+                      setErrorMsg("Please sign in to start a chat.");
+                      return;
+                    }
+
                     try {
-                      const created = await messagesService.createThread({
-                        itemId: item.id,
-                      });
-                      const threadId =
-                        created?.id || created?.threadId || created?.data?.id;
-                      navigate(
-                        threadId
-                          ? `/threads?tid=${encodeURIComponent(threadId)}`
-                          : "/threads"
-                      );
+                      // 1) Try find an existing thread for this item
+                      let threadId = null;
+                      try {
+                        const { threads } = await messagesService.listThreads({
+                          itemId: item.id,
+                          page: 1,
+                          size: 1,
+                        });
+                        threadId = threads?.[0]?.id || null;
+                      } catch (_) {}
+
+                      // 2) Create if missing
+                      if (!threadId) {
+                        const created = await messagesService.createThread({
+                          itemId: item.id,
+                          participantId,
+                        });
+                        threadId =
+                          created?.id ||
+                          created?.threadId ||
+                          created?.data?.id ||
+                          created?.data?.threadId ||
+                          null;
+                      }
+
+                      if (!threadId) {
+                        setErrorMsg("Chat was created, but no thread id returned.");
+                        return;
+                      }
+
+                      // 3) Navigate directly to the thread
+                      navigate(`/threads?tid=${encodeURIComponent(threadId)}`);
                     } catch (err) {
-                      setErrorMsg(err?.message || "Failed to start chat");
+                      const msg =
+                        err?.response?.data?.error?.message ||
+                        err?.response?.data?.message ||
+                        err?.message ||
+                        "Failed to start chat";
+                      if (err?.response?.status === 401) {
+                        setErrorMsg("Please sign in to start a chat.");
+                        return;
+                      }
+                      setErrorMsg(msg);
                     }
                   }}
                   className="bg-primary text-white px-4 py-2 rounded-full inline-flex items-center gap-2"
@@ -600,6 +628,7 @@ export default function ItemDetail() {
                   <span>I Found this item</span>
                 </button>
               )}
+
               <MetaBar
                 isOwner={isOwner}
                 commentsCountDisplay={commentsCountDisplay}
@@ -609,6 +638,7 @@ export default function ItemDetail() {
                 renderActions={false}
               />
             </div>
+
             <MetaBar
               isOwner={isOwner}
               onEdit={() =>
@@ -619,7 +649,6 @@ export default function ItemDetail() {
             />
           </div>
 
-          {/* Inline error banner for actions */}
           {errorMsg && (
             <div className="mb-6 text-sm rounded-lg bg-red-50 text-red-700 px-3 py-2 border border-red-200">
               {errorMsg}
@@ -628,7 +657,6 @@ export default function ItemDetail() {
         </div>
       </div>
 
-      {/* Confirm delete */}
       <ConfirmModal
         open={confirmDelete}
         onCancel={() => setConfirmDelete(false)}
