@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, useRef } from "react";
+import { useEffect, useState, useContext, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaList,
@@ -10,19 +10,17 @@ import {
   FaRegComment,
   FaRegEye,
 } from "react-icons/fa";
-import { FaFilter } from "react-icons/fa";
 import LocationMap from "../components/LocationMap";
 import ConfirmModal from "../components/ConfirmModal";
 import itemsService from "../services/itemsService";
 import categoriesList from "../util/categories";
 import categoriesApi from "../services/categoriesService";
-import CategoryDropdown from "../components/ui/CategoryDropdown";
 import { AuthContext } from "../contexts/AuthContext";
+import ItemsFilterPanel from "../components/items/ItemsFilterPanel";
 
 export default function ItemsList() {
   const navigate = useNavigate();
   const [allItems, setAllItems] = useState([]);
-  const [filteredItems, setFilteredItems] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [category, setCategory] = useState("");
@@ -34,8 +32,6 @@ export default function ItemsList() {
   const [radius, setRadius] = useState(10);
   const [zip, setZip] = useState("");
   const [coords, setCoords] = useState({ lat: null, lng: null });
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const filterMenuRef = useRef(null);
   const [confirmDelete, setConfirmDelete] = useState({
     open: false,
     item: null,
@@ -63,6 +59,12 @@ export default function ItemsList() {
     setUseMyLocationDraft(false);
     setRadiusDraft(10);
     setZipDraft("");
+    setUseMyLocation(false);
+    setRadius(10);
+    setZip("");
+    setZipCenter(null);
+    setCurrentPage(1);
+    setRefreshTick((t) => t + 1);
   };
 
   const { currentUser } = useContext(AuthContext);
@@ -122,21 +124,6 @@ export default function ItemsList() {
     };
   }, [zip]);
 
-  const haversineMiles = (lat1, lon1, lat2, lon2) => {
-    const R = 3958.8;
-    const toRad = (deg) => (deg * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
-
   useEffect(() => {
     function onStorage(e) {
       if (e.key === "lastItemUpdated") {
@@ -155,31 +142,63 @@ export default function ItemsList() {
     };
   }, []);
 
+  const filterByTab = useCallback((list, tab) => {
+    if (!Array.isArray(list)) return [];
+    if (!tab || tab === "All") return list;
+    const match = tab.toLowerCase();
+    return list.filter((item) => (item.status || "").toLowerCase() === match);
+  }, []);
+
+  const sortItemsClient = useCallback(
+    (list) => {
+      if (!Array.isArray(list)) return [];
+      const getTime = (item) => {
+        const raw = item?.dateValue || item?.date || "";
+        const dt = raw ? new Date(raw).getTime() : NaN;
+        return Number.isFinite(dt) ? dt : 0;
+      };
+      if (sort === "Name") {
+        return [...list].sort((a, b) => a.title.localeCompare(b.title));
+      }
+      if (sort === "Oldest") {
+        return [...list].sort((a, b) => getTime(a) - getTime(b));
+      }
+      // Default to Newest
+      return [...list].sort((a, b) => getTime(b) - getTime(a));
+    },
+    [sort]
+  );
+
   useEffect(() => {
     let mounted = true;
-    const toEnum = (s) => {
-      const x = (s || "").toString().toUpperCase();
-      if (x === "LOST" || x === "FOUND" || x === "RESOLVED") return x;
-      if (s === "Lost") return "LOST";
-      if (s === "Found") return "FOUND";
-      return undefined;
-    };
-    const useZipIntent = Boolean(zip && Number.isFinite(radius) && radius > 0);
+    const zip5 = String(zip || "").replace(/\D/g, "").slice(0, 5);
+    const trimmedSearch = (search || "").trim();
+    const digitSearch = (search || "").replace(/\D/g, "");
+    const applyZipFilter = !useMyLocation && digitSearch.length >= 3;
+    const applyTextFilter = trimmedSearch.length > 0;
     const params = {
-      q: search || undefined,
-      page: useZipIntent ? 1 : currentPage,
-      limit: useZipIntent ? 1000 : itemsPerPage,
-      lat:
-        useMyLocation && Number.isFinite(coords.lat) ? coords.lat : undefined,
-      lng:
-        useMyLocation && Number.isFinite(coords.lng) ? coords.lng : undefined,
-      radius: useMyLocation ? radius : undefined,
-      is_resolved: filter === "Resolved" ? true : false,
+      q: trimmedSearch || undefined,
+      page: currentPage,
+      limit: itemsPerPage,
     };
-    if (filter === "Lost" || filter === "Found") {
-      params.status = toEnum(filter);
-    }
     if (category) params.category = category;
+    if (filter === "Resolved") params.is_resolved = true;
+
+    const searchDigits = digitSearch.slice(0, 5);
+    if (!useMyLocation && !zip && searchDigits.length === 5 && Number.isFinite(Number(searchDigits))) {
+      params.zip = searchDigits;
+    }
+
+    const hasMyCoords =
+      useMyLocation && Number.isFinite(coords.lat) && Number.isFinite(coords.lng);
+    if (hasMyCoords) {
+      params.lat = coords.lat;
+      params.lng = coords.lng;
+      if (Number.isFinite(radius) && radius > 0) params.radius = radius;
+    } else if (!useMyLocation && zip5.length === 5) {
+      params.zip = zip5;
+      if (Number.isFinite(radius) && radius > 0) params.radius = radius;
+    }
     itemsService
       .getItems(params)
       .then(({ items = [], meta = {} } = {}) => {
@@ -191,100 +210,109 @@ export default function ItemsList() {
           if (x === "RESOLVED") return "Resolved";
           return s || "Lost";
         };
-        const normalized = (items || []).map((it) => ({
-          ...it,
-          status: it.isResolved ? "Resolved" : toStatusText(it.status),
-          imageUrl:
-            it.primaryPhotoUrl ||
-            (Array.isArray(it.photos) && it.photos.length
-              ? it.photos[0].url
-              : ""),
-          location: it.zipCode || it.location || "",
-          date: it.dateReported
-            ? new Date(it.dateReported).toLocaleDateString()
-            : it.createdAt
-              ? new Date(it.createdAt).toLocaleDateString()
-              : it.date || "",
-          userId: it.ownerId ?? it.userId,
-          lat: (() => {
-            const v = it.latitude;
-            if (typeof v === "number") return v;
-            const n = parseFloat(v);
-            return Number.isFinite(n) ? n : undefined;
-          })(),
-          lng: (() => {
-            const v = it.longitude;
-            if (typeof v === "number") return v;
-            const n = parseFloat(v);
-            return Number.isFinite(n) ? n : undefined;
-          })(),
-          seenCount:
-            typeof it.seenCount === "number"
-              ? it.seenCount
-              : typeof it.seen === "number"
-                ? it.seen
-                : 0,
-          category:
-            typeof it.category === "object" && it.category?.name
-              ? it.category.name
-              : it.categoryName || it.category || "",
-          zipCode: it.zipCode || it.zip || "",
-        }));
-        const categoryFiltered = category
-          ? normalized.filter(
-              (i) => (i.category || "").toLowerCase() === category.toLowerCase()
-            )
-          : normalized;
-        const zipFiltered = zip
-          ? (() => {
-              const base = String(zip).replace(/\D/g, "").slice(0, 5);
-              if (!base) return categoryFiltered;
-              if (
-                Array.isArray(zipCenter) &&
-                zipCenter.length === 2 &&
-                Number.isFinite(radius) &&
-                radius > 0
-              ) {
-                const [zcLat, zcLng] = zipCenter;
-                return categoryFiltered.filter((i) => {
-                  const hasCoords =
-                    Number.isFinite(i.lat) && Number.isFinite(i.lng);
-                  if (hasCoords) {
-                    const d = haversineMiles(zcLat, zcLng, i.lat, i.lng);
-                    return d <= radius + 1e-9;
-                  }
-                  const itemZip = String(i.zipCode || "")
-                    .replace(/\D/g, "")
-                    .slice(0, 5);
-                  const loc = String(i.location || "");
-                  return (
-                    (itemZip && itemZip === base) ||
-                    (base && loc.includes(base))
-                  );
-                });
-              }
-              return categoryFiltered;
-            })()
-          : categoryFiltered;
-        let sorted = [...zipFiltered];
-        if (sort === "Name")
-          sorted.sort((a, b) => a.title.localeCompare(b.title));
-        if (sort === "Oldest")
-          sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
-        if (sort === "Newest")
-          sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const digitFilter = digitSearch;
+        const queryLower = trimmedSearch.toLowerCase();
+        const normalized = (items || []).map((it) => {
+          const rawDate = it.dateReported || it.createdAt || it.date || "";
+          const parsedDate = rawDate ? new Date(rawDate) : null;
+          const displayDate = parsedDate && !Number.isNaN(parsedDate)
+            ? parsedDate.toLocaleDateString()
+            : "";
+          const rawZipValue =
+            it.zipCode !== undefined && it.zipCode !== null
+              ? it.zipCode
+              : it.zip;
+          const normalizedZip = (() => {
+            if (typeof rawZipValue === "number") {
+              return rawZipValue.toString().padStart(5, "0");
+            }
+            if (typeof rawZipValue === "string") {
+              return rawZipValue.trim();
+            }
+            return "";
+          })();
+          const normalizedLocation = (() => {
+            if (it.location && typeof it.location === "string") {
+              return it.location;
+            }
+            return normalizedZip || "";
+          })();
 
+          return {
+            ...it,
+            status: it.isResolved ? "Resolved" : toStatusText(it.status),
+            imageUrl:
+              it.primaryPhotoUrl ||
+              (Array.isArray(it.photos) && it.photos.length
+                ? it.photos[0].url
+                : ""),
+            location: normalizedLocation,
+            date: displayDate,
+            dateValue: rawDate || null,
+            userId: it.ownerId ?? it.userId,
+            lat: (() => {
+              const v = it.latitude;
+              if (typeof v === "number") return v;
+              const n = parseFloat(v);
+              return Number.isFinite(n) ? n : undefined;
+            })(),
+            lng: (() => {
+              const v = it.longitude;
+              if (typeof v === "number") return v;
+              const n = parseFloat(v);
+              return Number.isFinite(n) ? n : undefined;
+            })(),
+            seenCount:
+              typeof it.seenCount === "number"
+                ? it.seenCount
+                : typeof it.seen === "number"
+                  ? it.seen
+                  : 0,
+            category:
+              typeof it.category === "object" && it.category?.name
+                ? it.category.name
+                : it.categoryName || it.category || "",
+            zipCode: normalizedZip,
+          };
+        });
+        let searchFiltered = normalized;
+        if (applyZipFilter && digitFilter.length >= 3) {
+          searchFiltered = (searchFiltered || []).filter((item) => {
+            const zipCandidate = String(item.zipCode || "");
+            const locationCandidate = String(item.location || "");
+            return (
+              zipCandidate.includes(digitFilter) ||
+              locationCandidate.includes(digitFilter)
+            );
+          });
+        }
+
+        if (applyTextFilter && queryLower) {
+          const lowered = queryLower;
+          searchFiltered = searchFiltered.filter((item) => {
+            const haystacks = [
+              String(item.title || ""),
+              String(item.description || ""),
+              String(item.location || ""),
+              String(item.category || ""),
+            ].map((txt) => txt.toLowerCase());
+            return haystacks.some((txt) => txt.includes(lowered));
+          });
+        }
+
+        const sorted = sortItemsClient(searchFiltered);
         setAllItems(sorted);
-        setFilteredItems(sorted);
-        const computedTotal =
-          category || zip ? sorted.length : meta.total || sorted.length || 0;
-        setTotalCount(computedTotal);
+        if (filter === "All") {
+          setTotalCount(applyZipFilter || applyTextFilter ? sorted.length : meta.total || sorted.length || 0);
+        } else {
+          const filteredLength = filterByTab(sorted, filter).length;
+          setTotalCount(filteredLength);
+        }
       })
       .catch((err) => {
         console.warn("Failed to load items", err);
         if (!mounted) return;
         setAllItems([]);
-        setFilteredItems([]);
         setTotalCount(0);
       });
     return () => {
@@ -300,9 +328,9 @@ export default function ItemsList() {
     useMyLocation,
     radius,
     zip,
-    zipCenter,
     coords.lat,
     coords.lng,
+    filterByTab,
   ]);
   useEffect(() => {
     if (useMyLocation && navigator.geolocation) {
@@ -361,17 +389,6 @@ export default function ItemsList() {
     };
   }, [zipDraft]);
 
-  useEffect(() => {
-    function onDocClick(e) {
-      if (!isFilterOpen) return;
-      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target)) {
-        setIsFilterOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [isFilterOpen]);
-
   const handleEdit = (item) => {
     navigate(`/items/edit/${item.id}`, { state: { item } });
   };
@@ -379,20 +396,32 @@ export default function ItemsList() {
   const handleDelete = async (item) => {
     const prev = allItems;
     setErrorMsg("");
-    setAllItems((prevList) => prevList.filter((i) => i.id !== item.id));
+    setAllItems((prevList) => {
+      const nextListSorted = sortItemsClient(
+        prevList.filter((i) => i.id !== item.id)
+      );
+      setTotalCount((count) => Math.max(count - 1, 0));
+      return nextListSorted;
+    });
     try {
       await itemsService.deleteItem(item.id);
     } catch (err) {
       console.error("Failed to delete item", err);
       setAllItems(prev);
+      setTotalCount((count) => count + 1);
       const msg =
         err?.message || err?.error?.message || "Failed to delete item";
       setErrorMsg(msg);
     }
   };
 
+  const visibleItems = useMemo(
+    () => filterByTab(allItems, filter),
+    [allItems, filter, filterByTab]
+  );
+
   const totalPages = Math.ceil((totalCount || 0) / itemsPerPage) || 1;
-  const paginatedItems = filteredItems;
+  const paginatedItems = visibleItems;
   return (
     <div>
       {/* Main Container */}
@@ -428,166 +457,25 @@ export default function ItemsList() {
           </button>
         </div>
 
-        {/* Search and Controls */}
-        <div className="flex flex-col items-center gap-4 mb-8">
-          {/* Search Input */}
-          <div className="w-full max-w-2xl">
-            <input
-              type="text"
-              placeholder="Search by name, description or zipcode"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-gray-100 px-4 py-3 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-primary font-body text-ink placeholder:text-gray-400"
-            />
-          </div>
-          {/* Filter Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setFilter("All")}
-              className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
-                filter === "All"
-                  ? "bg-ink text-white border-ink"
-                  : "bg-white text-gray600 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter("Lost")}
-              className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
-                filter === "Lost"
-                  ? "bg-primary text-white border-primary"
-                  : "bg-white text-gray600 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              Lost
-            </button>
-            <button
-              onClick={() => setFilter("Found")}
-              className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
-                filter === "Found"
-                  ? "bg-success text-white border-success"
-                  : "bg-white text-gray600 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              Found
-            </button>
-            <div
-              className="relative inline-block ml-2"
-              ref={filterMenuRef}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") setIsFilterOpen(false);
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen((v) => !v)}
-                className="inline-flex items-center gap-2 text-sm text-gray600 hover:text-ink"
-                aria-haspopup="menu"
-                aria-expanded={isFilterOpen}
-              >
-                <FaFilter className="text-gray-500" />
-                <span>Filter</span>
-              </button>
-              {isFilterOpen && (
-                <div
-                  role="menu"
-                  className="absolute left-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg z-50 p-2"
-                >
-                  {[
-                    { value: "Newest", label: "Newest" },
-                    { value: "Oldest", label: "Oldest" },
-                    { value: "Name", label: "Name (A→Z)" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      role="menuitem"
-                      onClick={() => {
-                        setSort(opt.value);
-                        setIsFilterOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${sort === opt.value ? "bg-gray-50 text-ink" : "hover:bg-gray-50 text-gray-700"}`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center flex-wrap justify-center gap-3">
-            <CategoryDropdown
-              value={category || ""}
-              options={categories}
-              placeholder="All categories"
-              allOption={{ label: "All categories", value: "" }}
-              onChange={(val) => setCategory(val)}
-              widthClass="min-w-[240px]"
-              buttonClassName="px-4 py-2 rounded-full border border-gray-300 bg-white"
-              menuClassName=""
-            />
-            {/* Geo filters */}
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={useMyLocationDraft}
-                onChange={(e) => setUseMyLocationDraft(e.target.checked)}
-              />
-              Use my location
-            </label>
-            {/* ZIP input */}
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={10}
-              placeholder="e.g. 06611"
-              value={zipDraft}
-              onChange={(e) =>
-                setZipDraft(e.target.value.replace(/[^0-9-]/g, ""))
-              }
-              disabled={useMyLocationDraft}
-              className={`bg-white border border-gray-300 rounded-full px-4 py-2 text-sm font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary ${
-                useMyLocationDraft ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              aria-label="ZIP code"
-            />
-            {/* Radius slider */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Radius</span>
-              <input
-                type="range"
-                min={0}
-                max={50}
-                step={5}
-                value={radiusDraft}
-                onChange={(e) => setRadiusDraft(Number(e.target.value))}
-                className="accent-primary"
-                aria-label="Radius (miles)"
-                disabled={!(useMyLocationDraft || zipDraft)}
-              />
-              <span className="text-sm text-gray-600 w-10 text-right">
-                {radiusDraft} mi
-              </span>
-            </div>
-            {/* Reset/Apply */}
-            <button
-              type="button"
-              onClick={resetGeoDrafts}
-              className="px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium hover:bg-gray-50"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              onClick={applyGeoFilters}
-              className="px-5 py-2 rounded-full bg-ink text-white text-sm font-medium hover:opacity-90"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
+        <ItemsFilterPanel
+          search={search}
+          onSearchChange={setSearch}
+          filter={filter}
+          onFilterChange={setFilter}
+          sort={sort}
+          onSortChange={setSort}
+          category={category}
+          onCategoryChange={setCategory}
+          categories={categories}
+          useMyLocationDraft={useMyLocationDraft}
+          setUseMyLocationDraft={setUseMyLocationDraft}
+          zipDraft={zipDraft}
+          setZipDraft={setZipDraft}
+          radiusDraft={radiusDraft}
+          setRadiusDraft={setRadiusDraft}
+          applyGeoFilters={applyGeoFilters}
+          resetGeoDrafts={resetGeoDrafts}
+        />
 
         {/* Content */}
         {viewMode === "list" ? (
@@ -784,7 +672,7 @@ export default function ItemsList() {
             {(() => {})()}
             <LocationMap
               mode="display"
-              items={filteredItems}
+              items={visibleItems}
               center={
                 useMyLocationDraft &&
                 Number.isFinite(coords.lat) &&
