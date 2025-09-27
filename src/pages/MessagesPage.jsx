@@ -323,7 +323,7 @@ export default function MessagesPage() {
                 {selectedId ? "No messages yet" : hasThreads ? "Choose a chat on the left." : "No conversations yet"}
               </div>
             ) : (
-              <div className="mx-auto max-w-2xl space-y-3">
+              <div className="flex flex-col space-y-3">
                 {messages
                   .slice()
                   .reverse()

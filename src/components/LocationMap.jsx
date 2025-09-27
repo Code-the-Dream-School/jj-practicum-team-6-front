@@ -8,7 +8,7 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ItemCard from "./items/ItemCard";
 import L from "leaflet";
@@ -88,23 +88,39 @@ export default function LocationMap({
 
   function MapViewController({ center, radiusMiles }) {
     const map = useMap();
+    const prevCenterRef = useRef(null);
+
     useEffect(() => {
-      if (Array.isArray(center) && center.length === 2) {
-        const [lat, lng] = center;
-        if (Number.isFinite(radiusMiles) && radiusMiles > 0) {
-          const meters = radiusMiles * 1609.34;
-          try {
-            const bounds = L.latLng(lat, lng).toBounds(meters);
-            map.fitBounds(bounds, { padding: [20, 20] });
-          } catch (e) {
-            // Fallback: just center if bounds computation fails
-            map.setView([lat, lng], map.getZoom(), { animate: true });
-          }
-        } else {
-          map.setView([lat, lng], map.getZoom(), { animate: true });
-        }
+      if (!Array.isArray(center) || center.length !== 2) {
+        prevCenterRef.current = null;
+        return;
       }
-    }, [center?.[0], center?.[1], radiusMiles]);
+
+      const current = [Number(center[0]), Number(center[1])];
+      const prev = prevCenterRef.current;
+      const hasPrev = Array.isArray(prev) && prev.length === 2;
+      const centerChanged =
+        !hasPrev ||
+        Math.abs(prev[0] - current[0]) > 1e-6 ||
+        Math.abs(prev[1] - current[1]) > 1e-6;
+
+      prevCenterRef.current = current;
+      if (!centerChanged && hasPrev) {
+        return;
+      }
+
+      if (Number.isFinite(radiusMiles) && radiusMiles > 0) {
+        const meters = radiusMiles * 1609.34;
+        try {
+          const bounds = L.latLng(current[0], current[1]).toBounds(meters);
+          map.fitBounds(bounds, { padding: [20, 20] });
+        } catch (e) {
+          map.setView(current, map.getZoom(), { animate: true });
+        }
+      } else {
+        map.setView(current, map.getZoom(), { animate: true });
+      }
+    }, [center?.[0], center?.[1], radiusMiles, map]);
     return null;
   }
 
@@ -119,8 +135,8 @@ export default function LocationMap({
       >
         <MapViewController center={center} radiusMiles={radiusMiles} />
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution="&copy; OpenStreetMap &copy; CARTO"
         />
         <LocationMarker />
 

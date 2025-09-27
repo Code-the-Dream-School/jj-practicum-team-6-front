@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { FaRegSmile, FaRegImage } from "react-icons/fa";
 import EmojiPicker from "emoji-picker-react";
 
@@ -15,6 +15,24 @@ export default function MessageInput({
   disabled,
 }) {
   const fileRef = useRef(null);
+  const pickerRef = useRef(null);
+
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+
+    function handleGlobalClick(event) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleGlobalClick);
+    document.addEventListener("touchstart", handleGlobalClick);
+    return () => {
+      document.removeEventListener("mousedown", handleGlobalClick);
+      document.removeEventListener("touchstart", handleGlobalClick);
+    };
+  }, [showEmojiPicker, setShowEmojiPicker]);
 
   return (
     <form onSubmit={onSend} className="px-4 sm:px-6 md:px-8 py-3  bg-transparent">
@@ -63,8 +81,8 @@ export default function MessageInput({
             <FaRegSmile />
           </button>
           {showEmojiPicker && (
-            <div className="absolute bottom-12 right-0 z-10">
-              <EmojiPicker onEmojiClick={(_, e) => onEmojiClick(e)} />
+            <div ref={pickerRef} className="absolute bottom-12 right-0 z-10">
+              <EmojiPicker onEmojiClick={onEmojiClick} />
             </div>
           )}
         </div>

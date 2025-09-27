@@ -97,6 +97,7 @@ export default function ResetPasswordPage() {
                   value={form.password}
                   onChange={onChange}
                   autoComplete="new-password"
+                  variant="frameless"
                   className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
                 />
                 {errors.password ? (
@@ -114,6 +115,7 @@ export default function ResetPasswordPage() {
                   value={form.confirmPassword}
                   onChange={onChange}
                   autoComplete="new-password"
+                  variant="frameless"
                   className="h-full w-full text-sm placeholder-gray-400 pt-[2px]"
                 />
                 {errors.confirmPassword ? (
