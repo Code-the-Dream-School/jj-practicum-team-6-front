@@ -4,9 +4,11 @@ import {
   Marker,
   Popup,
   useMapEvents,
+  Circle,
+  useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ItemCard from "./items/ItemCard";
 import L from "leaflet";
@@ -24,14 +26,20 @@ L.Icon.Default.mergeOptions({
 });
 
 const createItemIcon = (status) => {
-  const color =
-    status === "Lost"
-      ? getComputedStyle(document.documentElement).getPropertyValue(
-          "--color-primary"
-        ) || "#E66240"
-      : getComputedStyle(document.documentElement).getPropertyValue(
-          "--color-success"
-        ) || "#7FD96C";
+  let color;
+  if (status === "Resolved") {
+    color = "#000000";
+  } else if (status === "Lost") {
+    color =
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "--color-primary"
+      ) || "#E66240";
+  } else {
+    color =
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "--color-success"
+      ) || "#7FD96C";
+  }
   return L.divIcon({
     className: "item-marker",
     html: `<div style="background: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
@@ -40,7 +48,14 @@ const createItemIcon = (status) => {
   });
 };
 
-export default function LocationMap({ onSelect, items = [], mode = "select" }) {
+export default function LocationMap({
+  onSelect,
+  items = [],
+  mode = "select",
+  center,
+  radiusMiles,
+  showCenterMarker = false,
+}) {
   const [position, setPosition] = useState([40.7128, -74.006]);
 
   const validItems = Array.isArray(items)
@@ -53,9 +68,11 @@ export default function LocationMap({ onSelect, items = [], mode = "select" }) {
       )
     : [];
   const initialCenter =
-    mode === "display" && validItems.length > 0
-      ? [validItems[0].lat, validItems[0].lng]
-      : position;
+    Array.isArray(center) && center.length === 2
+      ? center
+      : mode === "display" && validItems.length > 0
+        ? [validItems[0].lat, validItems[0].lng]
+        : position;
 
   function LocationMarker() {
     useMapEvents({
@@ -69,6 +86,28 @@ export default function LocationMap({ onSelect, items = [], mode = "select" }) {
     return mode === "select" ? <Marker position={position} /> : null;
   }
 
+  function MapViewController({ center, radiusMiles }) {
+    const map = useMap();
+    useEffect(() => {
+      if (Array.isArray(center) && center.length === 2) {
+        const [lat, lng] = center;
+        if (Number.isFinite(radiusMiles) && radiusMiles > 0) {
+          const meters = radiusMiles * 1609.34;
+          try {
+            const bounds = L.latLng(lat, lng).toBounds(meters);
+            map.fitBounds(bounds, { padding: [20, 20] });
+          } catch (e) {
+            // Fallback: just center if bounds computation fails
+            map.setView([lat, lng], map.getZoom(), { animate: true });
+          }
+        } else {
+          map.setView([lat, lng], map.getZoom(), { animate: true });
+        }
+      }
+    }, [center?.[0], center?.[1], radiusMiles]);
+    return null;
+  }
+
   return (
     <>
       <style>{`.leaflet-item-map .leaflet-control-container, .leaflet-item-map .leaflet-top, .leaflet-item-map .leaflet-bottom { z-index: 10 !important; }`}</style>
@@ -78,11 +117,31 @@ export default function LocationMap({ onSelect, items = [], mode = "select" }) {
         zoom={13}
         style={{ height: "300px", width: "100%" }}
       >
+        <MapViewController center={center} radiusMiles={radiusMiles} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
         <LocationMarker />
+
+        {showCenterMarker && Array.isArray(center) && center.length === 2 && (
+          <Marker position={center} />
+        )}
+
+        {Array.isArray(center) &&
+          center.length === 2 &&
+          Number.isFinite(radiusMiles) &&
+          radiusMiles > 0 && (
+            <Circle
+              center={center}
+              radius={radiusMiles * 1609.34}
+              pathOptions={{
+                color: "#3B82F6",
+                fillColor: "#93C5FD",
+                fillOpacity: 0.15,
+              }}
+            />
+          )}
 
         {mode === "display" &&
           validItems.map((item) => (
@@ -143,7 +202,13 @@ function MapPopupContent({ item }) {
             fontSize: 12,
             padding: "4px 8px",
             borderRadius: 12,
-            backgroundColor: item.status === "Lost" ? "#FEE2E2" : "#D1FAE5",
+            backgroundColor:
+              item.status === "Lost"
+                ? "#FEE2E2"
+                : item.status === "Found"
+                  ? "#D1FAE5"
+                  : "#000000",
+            color: item.status === "Resolved" ? "#FFFFFF" : "#000000",
           }}
         >
           {item.status}

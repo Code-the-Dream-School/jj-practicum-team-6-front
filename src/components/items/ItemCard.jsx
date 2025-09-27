@@ -20,7 +20,7 @@ export default function ItemCard({
     effectiveUserId && Number(item.userId) === Number(effectiveUserId);
 
   const handleEdit = () => {
-    navigate(`/items/edit/${item.id}`);
+    navigate(`/items/edit/${item.id}`, { state: { item } });
   };
 
   const handleDelete = () => {
@@ -54,7 +54,9 @@ export default function ItemCard({
             className={`text-xs px-2 py-1 rounded-full font-semibold ${
               item.status === "Lost"
                 ? "bg-red-50 text-primary"
-                : "bg-green-50 text-success"
+                : item.status === "Found"
+                  ? "bg-green-50 text-success"
+                  : "bg-black text-white"
             }`}
           >
             {item.status}
@@ -69,7 +71,12 @@ export default function ItemCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <span>No Image</span>
+            <img
+              src="/placeholder.svg"
+              alt="No image available"
+              className="w-full h-full object-cover opacity-80"
+              loading={imageLoading}
+            />
           )}
         </div>
         <h4 className="font-semibold mb-1">{item.title}</h4>
@@ -81,7 +88,7 @@ export default function ItemCard({
               e.stopPropagation();
               goToItem();
             }}
-            className="text-sm text-ink hover:underline inline-flex items-center gap-1"
+            className="text-sm text-ink inline-flex items-center gap-1"
             aria-label="Open item details"
           >
             More <span aria-hidden>→</span>
@@ -89,16 +96,19 @@ export default function ItemCard({
           <div className="flex items-center gap-4 text-sm text-gray-700">
             <span className="inline-flex items-center gap-1">
               <FaRegComment className="text-gray-500" />
-              {typeof item.commentsCount === "number"
-                ? item.commentsCount
-                : Array.isArray(item.comments)
-                  ? item.comments.length
-                  : 0}
+              {(() => {
+                const cnt =
+                  typeof item.commentsCount === "number"
+                    ? item.commentsCount
+                    : Array.isArray(item.comments)
+                      ? item.comments.length
+                      : 0;
+                return cnt;
+              })()}
             </span>
             <span className="inline-flex items-center gap-1">
               <FaRegEye className="text-gray-500" />
-              {typeof item.seen === "number" ? item.seen : 0}
-              <span className="ml-1 hidden sm:inline">Seen it</span>
+              {typeof item.seenCount === "number" ? item.seenCount : 0}
             </span>
           </div>
         </div>

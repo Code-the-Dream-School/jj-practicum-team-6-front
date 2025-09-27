@@ -28,12 +28,31 @@ export default function ThreadList({ threads = [], selectedId, loading, error, o
         ) : (
           <ul className="divide-y divide-gray-100">
             {threads.map((t) => {
+              const item = t.item || {};
+
+              // статус: item.status -> t.type -> по заголовку
+              const rawStatus =
+                item.status ||
+                t.type ||
+                ((item.title || "").toLowerCase().includes("lost") ? "LOST" : "");
+
               const status =
-                t.item?.status === "FOUND" ? "Found" :
-                t.item?.status === "LOST" ? "Lost" : "";
-              const titleLine = [status, t.item?.title].filter(Boolean).join(": ");
-              const preview = (t.lastMessage?.body || t.lastMessage?.text || "").trim(); // no fallback text
-              const thumb = t.item?.primaryPhotoUrl;
+                String(rawStatus).toLowerCase() === "found"
+                  ? "Found"
+                  : String(rawStatus).toLowerCase() === "lost"
+                  ? "Lost"
+                  : "";
+
+              const titleLine = [status, item.title].filter(Boolean).join(": ") || "Conversation";
+
+              // превью: lastMessage, иначе последний из messages, иначе плейсхолдер
+              const preview =
+                (t.lastMessage?.body || t.lastMessage?.text || "").trim() ||
+                (Array.isArray(t.messages) &&
+                  (t.messages.at(-1)?.body || t.messages.at(-1)?.text || "").trim()) ||
+                "No messages yet";
+
+              const thumb = item.primaryPhotoUrl || null;
 
               return (
                 <li key={t.id}>
@@ -54,10 +73,8 @@ export default function ThreadList({ threads = [], selectedId, loading, error, o
                     </div>
 
                     <div className="min-w-0">
-                      <div className="text-[13px] font-semibold text-gray-900 truncate">{titleLine || "Conversation"}</div>
-                      {preview ? (
-                        <div className="text-[12px] text-gray-500 truncate">{preview}</div>
-                      ) : null}
+                      <div className="text-[13px] font-semibold text-gray-900 truncate">{titleLine}</div>
+                      <div className="text-[12px] text-gray-500 truncate">{preview}</div>
                     </div>
                   </button>
                 </li>

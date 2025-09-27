@@ -25,8 +25,10 @@ export default function ResetPasswordPage() {
   function validate() {
     const e = {};
     if (!token) e.token = "Invalid or missing token";
-    if (!form.password || form.password.length < 8) e.password = "Min 8 characters";
-    if (form.password !== form.confirmPassword) e.confirmPassword = "Passwords do not match";
+    if (!form.password || form.password.length < 8)
+      e.password = "Min 8 characters";
+    if (form.password !== form.confirmPassword)
+      e.confirmPassword = "Passwords do not match";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -46,7 +48,9 @@ export default function ResetPasswordPage() {
       if (res.ok && json?.success) {
         setDone(true);
       } else {
-        setApiError(json?.error?.message || "Reset link is invalid or expired.");
+        setApiError(
+          json?.error?.message || "Reset link is invalid or expired."
+        );
       }
     } catch {
       setApiError("Network error");
@@ -65,7 +69,6 @@ export default function ResetPasswordPage() {
         onSubmit={onSubmit}
         className="border border-gray-200 p-6 rounded-[14px] shadow-[0_10px_15px_-3px_rgba(0,0,0,.1),0_4px_6px_-4px_rgba(0,0,0,.1)] bg-white w-full max-w-[520px]"
       >
-
         {done ? (
           <div className="text-center">
             <p className="text-sm text-green-700 mb-4">
@@ -80,7 +83,9 @@ export default function ResetPasswordPage() {
         ) : (
           <>
             {!token && (
-              <p className="mb-4 text-sm text-red-600">Invalid or missing token.</p>
+              <p className="mb-4 text-sm text-red-600">
+                Invalid or missing token.
+              </p>
             )}
 
             <div className="mb-4 space-y-4">

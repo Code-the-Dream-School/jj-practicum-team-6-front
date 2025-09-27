@@ -2,7 +2,11 @@ import { useContext, useEffect, useState } from "react";
 import { MdEmail, MdPhone } from "react-icons/md";
 import { FaMapMarkerAlt, FaEdit } from "react-icons/fa";
 import { AuthContext } from "../../contexts/AuthContext";
-import { updateProfile } from "../../services/authService";
+import {
+  updateProfile,
+  uploadAvatar,
+  deleteAvatar,
+} from "../../services/authService";
 
 export default function ProfileHeader() {
   const { currentUser, setCurrentUser } = useContext(AuthContext);
@@ -11,6 +15,7 @@ export default function ProfileHeader() {
   const [editForm, setEditForm] = useState({});
   const [avatarFile, setAvatarFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveFieldErrors, setSaveFieldErrors] = useState({});
 
@@ -71,7 +76,15 @@ export default function ProfileHeader() {
       payload.zipCode = nextZip;
 
     try {
-      const serverUser = await updateProfile(payload);
+      let serverUser = null;
+      if (avatarFile) {
+        try {
+          serverUser = await uploadAvatar(avatarFile);
+        } catch (e) {
+          setSaveError("Avatar upload failed, saved other changes.");
+        }
+      }
+      serverUser = await updateProfile(payload);
       if (serverUser) {
         setUser(serverUser);
         setCurrentUser(serverUser);
@@ -158,6 +171,32 @@ export default function ProfileHeader() {
               />
             </label>
           )}
+          {isEditing && user.avatarUrl ? (
+            <button
+              type="button"
+              disabled={removingAvatar}
+              onClick={async () => {
+                setSaveError("");
+                setRemovingAvatar(true);
+                try {
+                  const u = await deleteAvatar();
+                  if (u) {
+                    setUser(u);
+                    setCurrentUser(u);
+                    localStorage.setItem("user", JSON.stringify(u));
+                    setAvatarFile(null);
+                  }
+                } catch (e) {
+                  setSaveError("Failed to remove avatar");
+                } finally {
+                  setRemovingAvatar(false);
+                }
+              }}
+              className="text-xs text-red-600 hover:text-red-700"
+            >
+              {removingAvatar ? "Removing…" : "Remove photo"}
+            </button>
+          ) : null}
         </div>
         <div className="flex flex-col items-center sm:items-start gap-2">
           <h2 className="text-2xl font-semibold text-ink font-['Roboto']">
@@ -169,6 +208,34 @@ export default function ProfileHeader() {
           </div>
           {isEditing ? (
             <>
+              <div className="flex items-center gap-2 w-full">
+                <input
+                  name="firstName"
+                  placeholder="First name"
+                  value={editForm.firstName}
+                  onChange={handleEditChange}
+                  className="flex-1 px-3 py-2 rounded-full border border-gray-200"
+                />
+                {saveFieldErrors.firstName ? (
+                  <span className="text-xs text-red-600">
+                    {saveFieldErrors.firstName}
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2 w-full">
+                <input
+                  name="lastName"
+                  placeholder="Last name"
+                  value={editForm.lastName}
+                  onChange={handleEditChange}
+                  className="flex-1 px-3 py-2 rounded-full border border-gray-200"
+                />
+                {saveFieldErrors.lastName ? (
+                  <span className="text-xs text-red-600">
+                    {saveFieldErrors.lastName}
+                  </span>
+                ) : null}
+              </div>
               <div className="flex items-center gap-2 w-full">
                 <input
                   name="city"

@@ -53,13 +53,38 @@ export default function CommentsSection({
           })
           .map((c) => (
             <div key={c.id} className="group relative flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
-                {(() => {
+              {(() => {
+                const avatarUrl =
+                  (typeof c.author === "object" &&
+                    (c.author?.avatarUrl ||
+                      c.author?.avatar ||
+                      c.author?.photoUrl ||
+                      c.author?.profileImageUrl)) ||
+                  null;
+                if (avatarUrl) {
+                  const altName =
+                    (typeof c.author === "object" &&
+                      `${c.author?.firstName || ""} ${c.author?.lastName || ""}`.trim()) ||
+                    (typeof c.author === "string" ? c.author : "User");
+                  return (
+                    <img
+                      src={avatarUrl}
+                      alt={altName || "User avatar"}
+                      className="w-8 h-8 rounded-full object-cover border"
+                    />
+                  );
+                }
+                const initial = (() => {
                   if (typeof c.author === "string") return c.author[0] || "U";
                   const name = c.author?.firstName || c.author?.lastName || "U";
                   return (name && name[0]) || "U";
-                })()}
-              </div>
+                })();
+                return (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                    {initial}
+                  </div>
+                );
+              })()}
               <div className="flex-1">
                 <div className="font-semibold flex items-center justify-between">
                   <div>

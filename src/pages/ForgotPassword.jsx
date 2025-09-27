@@ -47,7 +47,6 @@ export default function ForgotPasswordPage() {
         onSubmit={onSubmit}
         className="border border-gray-200 p-6 rounded-[14px] shadow-[0_10px_15px_-3px_rgba(0,0,0,.1),0_4px_6px_-4px_rgba(0,0,0,.1)] bg-white w-full max-w-[520px]"
       >
-
         {!submitted ? (
           <>
             <div className="mb-4 space-y-4">

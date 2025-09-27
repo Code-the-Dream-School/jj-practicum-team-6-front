@@ -8,6 +8,7 @@ import categories from "../util/categories";
 import itemsService from "../services/itemsService";
 import uploadsService from "../services/uploadsService";
 import Modal from "../components/Modal.jsx";
+import AddItemForm from "../components/items/AddItemForm.jsx";
 
 export default function AddFoundItemPage({ currentUser }) {
   const [showMap, setShowMap] = useState(false);
@@ -145,187 +146,12 @@ export default function AddFoundItemPage({ currentUser }) {
     })();
   }
 
+export default function AddFoundItemPage() {
   return (
-    <div className="flex flex-col items-center">
-      {errorMsg && (
-        <div className="max-w-3xl mx-auto mb-4 rounded-lg bg-red-50 text-red-700 px-4 py-3 border border-red-200">
-          {errorMsg}
-        </div>
-      )}
-      <main className="w-full">
-        <h1 className="text-center font-display text-4xl font-black mt-10 mb-8">
-          Add Found Item
-        </h1>
-        <form
-          onSubmit={onSubmit}
-          className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 w-full max-w-3xl mx-auto mb-16"
-        >
-          <h2 className="text-2xl font-bold mb-6 font-display">Item Details</h2>
-          {/* Item Title */}
-          <div className="mb-4 max-w-md">
-            <label className="block font-semibold mb-2">Item Title *</label>
-            <Input
-              name="title"
-              value={form.title}
-              onChange={onChange}
-              placeholder="e.g., Black iPhone 13"
-              required
-              className="w-full rounded-full border border-gray-200 px-4 py-3 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          {/* Description */}
-          <div className="mb-4">
-            <label className="block font-semibold mb-2">Description *</label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={onChange}
-              placeholder="Describe your item in detail"
-              className="w-full rounded-2xl border border-gray-200 px-4 py-3 font-roboto text-ink placeholder:text-gray-400 transition hover:border-primary focus:border-success focus:outline-none"
-              rows={4}
-              required
-            />
-          </div>
-          {/* Location + Date */}
-          <div className="flex gap-4 mb-4 items-end">
-            <div className="flex-1">
-              <label className="block font-semibold mb-2">
-                Location Where Found *
-              </label>
-              <Input
-                name="location"
-                value={form.location}
-                onChange={onChange}
-                placeholder="Add address or zipcode"
-                required
-                className="w-full rounded-full border border-gray-200 px-4 py-3 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <button
-              type="button"
-              aria-label="Open map"
-              className="h-[50px] py-4 px-6 rounded-full border border-gray-200 text-gray-500 hover:text-primary hover:border-primary transition flex items-center justify-center gap-2 font-body"
-              onClick={() => setShowMap(true)}
-            >
-              <FaMapMarkerAlt />
-            </button>
-            <Modal
-              open={showMap}
-              onClose={() => setShowMap(false)}
-              title="Select Location"
-              maxWidth="max-w-xl"
-            >
-              <div className="w-full h-80 overflow-hidden rounded-lg">
-                <LocationMap onSelect={handleMapSelect} />
-              </div>
-              <p className="mt-3 text-sm text-gray-500">
-                Click on the map to set location
-              </p>
-            </Modal>
-            <div className="flex-1">
-              <label className="block font-semibold mb-2">Date Found</label>
-              <div className="relative">
-                <Input
-                  ref={dateRef}
-                  name="date"
-                  value={form.date}
-                  onChange={onChange}
-                  type="date"
-                  min="1900-01-01"
-                  max="9999-12-31"
-                  placeholder="mm/dd/yyyy"
-                  className="w-full rounded-full border border-gray-200 px-4 py-3 pr-4 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary text-right"
-                />
-              </div>
-            </div>
-          </div>
-          {/* Category Dropdown */}
-          <div className="mb-4 max-w-md">
-            <label className="block font-semibold mb-2">Add category</label>
-            <select
-              name="category"
-              value={form.category}
-              onChange={onChange}
-              className="w-full rounded-full border border-gray-200 px-4 py-3 pr-12 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
-              style={{
-                backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='36' viewBox='0 0 24 24' width='36' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")`,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 1rem center",
-                backgroundSize: "2rem",
-              }}
-            >
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* Photos */}
-          <div className="mb-6">
-            <label className="block font-semibold mb-2">Photos</label>
-            {/* Thumbnails Preview */}
-            {form.photos && form.photos.length > 0 && (
-              <div className="mb-4 flex gap-4">
-                {form.photos.map((file, idx) => (
-                  <div key={idx} className="flex flex-col items-center">
-                    <div className="relative w-24 h-24">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        className="w-24 h-24 object-cover rounded-xl border"
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-1 right-1 bg-black bg-opacity-60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-opacity-90"
-                        onClick={() => handleRemovePhoto(idx)}
-                        aria-label="Remove photo"
-                      >
-                        &times;
-                      </button>
-                    </div>
-                    <span className="mt-2 text-xs text-gray-600 truncate w-24 text-center">
-                      {file.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="border border-gray-200 rounded-2xl px-4 py-8 flex flex-col items-center bg-gray-50">
-              <FaImage className="text-4xl mb-2 text-gray-500" />
-              <span className="mb-2 text-gray-500 font-semibold">
-                Add photos
-              </span>
-              <span className="mb-4 text-xs text-gray-500">
-                Drag & drop images here, or click to browse
-              </span>
-              <label className="inline-block">
-                <input
-                  type="file"
-                  multiple
-                  onChange={onFileChange}
-                  className="hidden"
-                />
-                <span className="border border-gray-200 px-16 py-2.5 rounded-full shadow cursor-pointer inline-flex items-center gap-2 bg-white">
-                  <FaUpload className="text-m" /> Browse Files
-                </span>
-              </label>
-            </div>
-          </div>
-          {/* Publish */}
-          <div className="mt-6 flex justify-center">
-            <Button
-              type="submit"
-              variant="primary"
-              size="medium"
-              className="rounded-full font-medium shadow-card max-w-xs"
-              disabled={submitting}
-            >
-              {submitting ? "Saving…" : "Save and Publish"}
-            </Button>
-          </div>
-        </form>
-      </main>
-    </div>
+    <AddItemForm
+      status="FOUND"
+      title="Add Found Item"
+      locationLabel="Location Where Found *"
+    />
   );
 }

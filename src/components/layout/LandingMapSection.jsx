@@ -142,8 +142,22 @@ const LandingMapSection = () => {
                     {item.status}
                   </span>
                 </div>
-                <div className="w-full h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-gray-400 text-3xl">
-                  {item.status === "Lost" ? "📱" : "🎒"}
+                <div className="w-full h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-gray-400 overflow-hidden">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover rounded-xl"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <img
+                      src="/placeholder.svg"
+                      alt="No image available"
+                      className="w-full h-full object-cover rounded-xl opacity-80"
+                      loading="lazy"
+                    />
+                  )}
                 </div>
                 <h4 className="font-display text-xl font-semibold text-ink mb-3 leading-tight">
                   {item.title}

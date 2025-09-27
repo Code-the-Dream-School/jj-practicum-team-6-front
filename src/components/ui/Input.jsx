@@ -1,7 +1,7 @@
 import React from "react";
 
 const baseClasses =
-  "w-full h-full rounded-full border border-gray-200 px-0 py-0 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:border-none hover:border-none flex items-center justify-center";
+  "w-full h-full rounded-full border border-gray-200 px-0 py-0 font-roboto text-ink placeholder:text-gray-400 focus:outline-none focus:ring-0 flex items-center justify-center transition-colors hover:border-gray-300";
 
 const Input = React.forwardRef(function Input(
   { className = "", type = "text", ...rest },
