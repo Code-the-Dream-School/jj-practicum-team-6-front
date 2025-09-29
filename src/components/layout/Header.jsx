@@ -7,7 +7,7 @@ import ProfileMenu from "../ProfileMenu";
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState("How it works?");
+  const [activeNav, setActiveNav] = useState("Welcome!");
   const [pillStyle, setPillStyle] = useState({ width: 0, left: 0 });
   const navRefs = useRef([]);
 
@@ -15,11 +15,11 @@ const Header = () => {
   const hasToken = !!localStorage.getItem("token");
 
   const navigationItems = [
+    { label: "Welcome!", href: "#hero" },
     { label: "How it works?", href: "#how-it-works" },
     { label: "Our values", href: "#values" },
     { label: "Get Started", href: "#get-started" },
     { label: "Our team", href: "#team" },
-    { label: "About us", href: "#about" },
   ];
 
   const activeIndex = navigationItems.findIndex(
@@ -38,6 +38,49 @@ const Header = () => {
       }
     }
   }, [activeIndex, isLandingPage]);
+
+  // Add this useEffect after your existing useEffect
+  useEffect(() => {
+    if (!isLandingPage) return;
+
+    const handleScroll = () => {
+      const sections = navigationItems.map((item) => ({
+        label: item.label,
+        element: document.querySelector(item.href),
+      }));
+
+      const headerHeight = 100; // Same as your scroll offset
+      const scrollPosition = window.scrollY + headerHeight + 50; // Add 50px buffer
+
+      // Find which section is currently in view
+      let currentSection = navigationItems[0].label; // Default to first section
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section.element) {
+          const sectionTop = section.element.offsetTop;
+          if (scrollPosition >= sectionTop) {
+            currentSection = section.label;
+            break;
+          }
+        }
+      }
+
+      // Update active navigation only if it's different
+      if (currentSection !== activeNav) {
+        setActiveNav(currentSection);
+      }
+    };
+
+    // Add scroll listener
+    window.addEventListener("scroll", handleScroll);
+
+    // Initial check
+    handleScroll();
+
+    // Cleanup
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isLandingPage, activeNav, navigationItems]);
 
   const handleAuthClick = (type) => {
     if (type === "signin") {

@@ -1,65 +1,71 @@
-import { useState } from "react";
-import { FaChevronLeft, FaChevronRight, FaLinkedin } from "react-icons/fa";
+import { FaLinkedin } from "react-icons/fa";
 
 const OurTeamSection = () => {
   const teamMembers = [
     {
+      name: "Frank Stepanski",
+      role: "Practicum mentor",
+      // LinkedIn profile image URL,
+      image:
+        "https://media.licdn.com/dms/image/v2/C4E03AQG8mXFiHHxSsw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1612190765596?e=1761782400&v=beta&t=TRlDv_2TH5eIbRYBZ6R2lUceoUG1Zk8u7HBXNVV8zTk",
+      linkedin: "https://www.linkedin.com/in/frankstepanski/",
+    },
+    {
       name: "Mario Martinez",
       role: "Lead mentor",
-      image: null, // Placeholder for now
-      linkedin: "", // Add LinkedIn URL when available
+      image:
+        "https://media.licdn.com/dms/image/v2/D5603AQEN1IVOaOzd6Q/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1732139508311?e=1761782400&v=beta&t=coUXq-3TE1cujGyqonU14BaudTwl8-7EjLw3flvMJ9U",
+      linkedin: "https://www.linkedin.com/in/mntri4/",
     },
     {
       name: "Chris Lee",
       role: "React/Node mentor",
       image: null,
-      linkedin: "",
+      linkedin: "https://linkedin.com/in/chris-lee",
     },
     {
       name: "Aida Burlutckaia",
       role: "Full Stack Developer, Designer",
       subtitle: "Assistant mentor",
-      image: null,
-      linkedin: "",
+      image:
+        "https://media.licdn.com/dms/image/v2/D4E35AQFelFjMTwC-dA/profile-framedphoto-shrink_200_200/profile-framedphoto-shrink_200_200/0/1734444267715?e=1759644000&v=beta&t=6nwTxBUD2bF5osh7MDFiKEWsI8kDbZfRr0SAABXWzs8",
+      linkedin: "https://www.linkedin.com/in/aida-burlutckaia-08832363/",
     },
     {
       name: "Vera Fesianava",
       role: "Backend Developer",
-      image: null,
-      linkedin: "",
+      image:
+        "https://media.licdn.com/dms/image/v2/C5603AQGqzNx0zTqzIw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1516586883056?e=1761782400&v=beta&t=kzKRluIQcp7TR9tJtv8ow8SN7i260NwqYnGeiJNGz-4",
+      linkedin: "https://www.linkedin.com/in/vera-fesianava/",
     },
     {
       name: "Alina Dalantaeva",
       role: "Frontend Developer",
       subtitle: "Assistant mentor",
-      image: null,
-      linkedin: "",
+      image:
+        "https://media.licdn.com/dms/image/v2/D4D03AQEVJ-pLmHqClQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1719335178445?e=1761782400&v=beta&t=N5YodskOGeBN_b6RTtXmnOp1ZRmyiigNipyAWtF6vl8",
+      linkedin: "https://www.linkedin.com/in/alina-dalantaeva/",
     },
     {
       name: "Hemang Limbachiya",
       role: "Frontend Developer",
       subtitle: "Assistant mentor",
-      image: null,
-      linkedin: "",
+      image:
+        "https://media.licdn.com/dms/image/v2/D5603AQHA4E_bkYnZlw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1667775483173?e=1761782400&v=beta&t=XvLWlaOIJd5-B10i0KXrX5WsD9jU_rAUrI5_modudDY",
+      linkedin: "https://www.linkedin.com/in/hemang-limbachiya/",
     },
     {
       name: "Masouma Ahmadi Jay",
       role: "Frontend Developer",
       image: null,
-      linkedin: "",
+      linkedin: "https://linkedin.com/in/masouma-ahmadi-jay",
     },
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerPage = 4; // Show 4 cards at a time on desktop
-  const maxIndex = Math.max(0, teamMembers.length - itemsPerPage);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
+  const handleLinkedInClick = (linkedinUrl) => {
+    if (linkedinUrl) {
+      window.open(linkedinUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
   return (
@@ -77,106 +83,66 @@ const OurTeamSection = () => {
           mentorship.
         </p>
 
-        {/* Slideshow Container */}
-        <div className="relative">
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-            aria-label="Previous team members"
-          >
-            <FaChevronLeft className="w-5 h-5 text-gray-600" />
-          </button>
-
-          <button
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-            aria-label="Next team members"
-          >
-            <FaChevronRight className="w-5 h-5 text-gray-600" />
-          </button>
-
-          {/* Cards Container */}
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${currentIndex * 25}%)`, // Show 4 cards at a time (100/4 = 25%)
-              }}
-            >
-              {teamMembers.map((member, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 w-1/4 px-3" // Fixed width for each card
-                >
-                  <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
-                    {/* Image placeholder */}
-                    <div className="w-24 h-24 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                      {member.image ? (
-                        <img
-                          src={member.image}
-                          alt={member.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="text-gray-400 text-2xl">👤</div>
-                      )}
-                    </div>
-
-                    {/* Name */}
-                    <h3 className="font-display text-lg font-semibold text-ink mb-1 min-h-[3rem] flex items-center justify-center">
-                      {member.name}
-                    </h3>
-
-                    {/* Role */}
-                    <p className="font-body text-sm text-gray600 mb-2 min-h-[2.5rem] flex items-center justify-center">
-                      {member.role}
-                    </p>
-
-                    {/* Subtitle if exists */}
-                    <div className="min-h-[2rem] flex items-center justify-center mb-3">
-                      {member.subtitle && (
-                        <p className="font-body text-xs text-gray-500 text-center">
-                          {member.subtitle}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* LinkedIn - pushed to bottom */}
-                    <div className="mt-auto pt-4">
-                      {member.linkedin ? (
-                        <a
-                          href={member.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
-                          aria-label={`${member.name}'s LinkedIn profile`}
-                        >
-                          <FaLinkedin className="w-4 h-4" />
-                        </a>
-                      ) : (
-                        <div className="w-8 h-8 bg-gray-300 rounded-full mx-auto flex items-center justify-center">
-                          <FaLinkedin className="w-4 h-4 text-gray-500" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Dots indicator */}
-          <div className="flex justify-center mt-8 space-x-2">
-            {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-              <button
+        {/*  */}
+        {/* Team Grid - Centered with proper spacing */}
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl">
+            {teamMembers.map((member, index) => (
+              <div
                 key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? "bg-primary" : "bg-gray-300"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
+                className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow flex flex-col w-60 h-60"
+              >
+                {/* Image placeholder */}
+                <div className="w-20 h-20 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                  {member.image ? (
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="text-gray-400 text-xl">👤</div>
+                  )}
+                </div>
+
+                {/* Name */}
+                <h3 className="font-display text-lg font-semibold text-ink mb-2 leading-tight">
+                  {member.name}
+                </h3>
+
+                {/* Role */}
+                <p className="font-body text-sm text-gray600 mb-1 text-center leading-tight">
+                  {member.role}
+                </p>
+
+                {/* Subtitle if exists */}
+                <div className="mb-4 flex-1">
+                  {member.subtitle && (
+                    <p className="font-body text-xs text-gray-500 text-center">
+                      {member.subtitle}
+                    </p>
+                  )}
+                </div>
+
+                {/* LinkedIn - at bottom */}
+                <div className="mt-auto">
+                  <button
+                    onClick={() => handleLinkedInClick(member.linkedin)}
+                    className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 transform hover:scale-110 ${
+                      member.linkedin
+                        ? "bg-sky-500 hover:bg-sky-600 text-white cursor-pointer"
+                        : "bg-sky-300 text-sky-100 cursor-default"
+                    }`}
+                    aria-label={
+                      member.linkedin
+                        ? `Visit ${member.name}'s LinkedIn profile`
+                        : `${member.name}'s LinkedIn not available`
+                    }
+                  >
+                    <FaLinkedin className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>

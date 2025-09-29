@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import ItemCard from "./items/ItemCard";
 import L from "leaflet";
 import { MdLocationPin } from "react-icons/md";
-import ReactDOMServer from 'react-dom/server';
+import ReactDOMServer from "react-dom/server";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({

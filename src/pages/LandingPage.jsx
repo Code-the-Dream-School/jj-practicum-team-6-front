@@ -8,7 +8,7 @@ import HowItWorksSection from "../components/layout/HowItWorksSection";
 import OurValuesSection from "../components/layout/OurValuesSection";
 import CallToActionSection from "../components/layout/CallToActionSection";
 import OurTeamSection from "../components/layout/OurTeamSection";
-import AboutUsSection from "../components/layout/AboutUsSection";
+import WelcomeSection from "../components/layout/WelcomeSection";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 
 const LandingPage = () => {
@@ -47,6 +47,8 @@ const LandingPage = () => {
     <>
       <HeroSection />
 
+      <WelcomeSection />
+
       <LandingMapSection />
 
       <HowItWorksSection />
@@ -56,8 +58,6 @@ const LandingPage = () => {
       <CallToActionSection />
 
       <OurTeamSection />
-
-      <AboutUsSection />
 
       <ScrollToTopButton />
     </>

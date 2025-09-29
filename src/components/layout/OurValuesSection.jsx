@@ -3,22 +3,22 @@ import { FaRegClock, FaMap, FaUsers, FaComments } from "react-icons/fa";
 const OurValuesSection = () => {
   const values = [
     {
-      icon: <FaRegClock className="w-12 h-12 text-gray-500" />,
+      iconSrc: "/images/easy-to-use_our-values.png", // the camera icon
       title: "Easy to Use",
       description: "Drop a pin, add a photo — done in seconds.",
     },
     {
-      icon: <FaMap className="w-12 h-12 text-gray-500" />,
+      iconSrc: "/images/map-based-search_our-values.png", // location pin icon
       title: "Map-Based Search",
       description: "See lost and found items right where they were seen.",
     },
     {
-      icon: <FaUsers className="w-12 h-12 text-gray-500" />,
+      iconSrc: "/images/community-powered_our-values.png", // hands/community icon
       title: "Community Powered",
       description: "Anyone can mark 'Seen it' or leave a comment.",
     },
     {
-      icon: <FaComments className="w-12 h-12 text-gray-500" />,
+      iconSrc: "/images/fast-contact_our-values.png", // chat bubbles icon
       title: "Fast Contact",
       description: "Reach out directly to the person who posted.",
     },
@@ -45,9 +45,13 @@ const OurValuesSection = () => {
               key={index}
               className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow"
             >
-              {/* Icon placeholder box */}
-              <div className="w-20 h-16 bg-gray-200 rounded-lg mx-auto mb-6 flex items-center justify-center">
-                {value.icon}
+              {/* Icon without grey box - larger */}
+              <div className="mx-auto mb-6 flex items-center justify-center">
+                <img
+                  src={value.iconSrc}
+                  alt={`${value.title} icon`}
+                  className="w-20 h-20 object-contain"
+                />
               </div>
 
               {/* Title */}

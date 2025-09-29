@@ -165,9 +165,9 @@ body {
 }
 
 /* map grayscale styling for better visibility of markers */
-.grayscale-map {
+/* .grayscale-map {
   filter: grayscale(25%);
-}
+} */
 
 /* Override for water areas to keep them blue */
 .leaflet-container {
@@ -179,7 +179,7 @@ body {
   width: 100% !important;
 
   /* Slightly increase contrast and reduce brightness */
-  filter: contrast(1.15) brightness(1.01);
+  /* filter: contrast(1.15) brightness(1.01); */
 }
 
 /* Map marker styles -- recent edit */
