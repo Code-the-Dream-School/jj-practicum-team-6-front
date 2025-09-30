@@ -164,19 +164,51 @@ body {
   --tw-gradient-to: #eff6ff;
 }
 
-/* Ensure Leaflet maps size properly */
+/* map grayscale styling for better visibility of markers */
+/* .grayscale-map {
+  filter: grayscale(25%);
+} */
+
+/* Override for water areas to keep them blue */
+.leaflet-container {
+  background-color: #4a90e2 !important; /* Blue background for water */
+}
+
 .leaflet-container {
   height: 100% !important;
   width: 100% !important;
+
+  /* Slightly increase contrast and reduce brightness */
+  /* filter: contrast(1.15) brightness(1.01); */
 }
 
 /* Map marker styles -- recent edit */
 .item-marker {
   background: transparent !important;
   border: none !important;
+
+  /* Add shadow to markers */
+  /* filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); */
 }
 
 /* Fix for map in containers */
 .leaflet-map-pane {
   z-index: 1;
+}
+
+/* Fix map zoom controls overlapping sticky header */
+.leaflet-control-zoom {
+  margin-top: 20px !important; /* Push down below sticky header */
+  margin-left: 10px !important;
+  z-index: 999 !important;
+}
+
+/* Ensure the sticky header stays above map controls */
+header {
+  z-index: 1001 !important;
+}
+
+/* Additional specificity for the landing page map container */
+#recently-added .leaflet-container .leaflet-control-zoom {
+  margin-top: 10px !important;
 }

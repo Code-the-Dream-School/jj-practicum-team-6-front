@@ -12,6 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ItemCard from "./items/ItemCard";
 import L from "leaflet";
+import { MdLocationPin } from "react-icons/md";
+import ReactDOMServer from "react-dom/server";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -25,26 +27,74 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
+// --------------Simple custom markers for items (previous code)--------
+// const createItemIcon = (status) => {
+//   const color =
+//     status === "Lost"
+//       ? getComputedStyle(document.documentElement).getPropertyValue(
+//           "--color-primary"
+//         ) || "#E66240"
+//       : getComputedStyle(document.documentElement).getPropertyValue(
+//           "--color-success"
+//         ) || "#7FD96C";
+//   return L.divIcon({
+//     className: "item-marker",
+//     html: `<div style="background: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+//     iconSize: [24, 24],
+//     iconAnchor: [12, 12],
+//   });
+// };
+
+//////////////////bottom lines commented after rebase
+// const createItemIcon = (status) => {
+//   let color;
+//   if (status === "Resolved") {
+//     color = "#000000";
+//   } else if (status === "Lost") {
+//     color =
+//       getComputedStyle(document.documentElement).getPropertyValue(
+//         "--color-primary"
+//       ) || "#E66240";
+//   } else {
+//     color =
+//       getComputedStyle(document.documentElement).getPropertyValue(
+//         "--color-success"
+//       ) || "#7FD96C";
+//   }
+//   return L.divIcon({
+//     className: "item-marker",
+//     html: `<div style="display: flex; align-items: center; justify-content: center;">
+//       ${iconHTML}
+//     </div>`,
+//     iconSize: [32, 32],
+//     iconAnchor: [16, 32], // Anchor at bottom center of pin
+//     popupAnchor: [0, -32], // Popup appears above the pin
+//   });
+// };
+
 const createItemIcon = (status) => {
-  let color;
-  if (status === "Resolved") {
-    color = "#000000";
-  } else if (status === "Lost") {
-    color =
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--color-primary"
-      ) || "#E66240";
-  } else {
-    color =
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--color-success"
-      ) || "#7FD96C";
-  }
+  const color = status === "Lost" ? "#D30000" : "#228B22";
+  const glowColor = status === "Lost" ? "#FF6B6B" : "#4CAF50";
+
+  // Create the icon as a React component and render it to HTML string
+  const iconHTML = ReactDOMServer.renderToString(
+    <MdLocationPin
+      style={{
+        color: color,
+        fontSize: "32px",
+        filter: `drop-shadow(1px 1px 2px ${glowColor})`,
+      }}
+    />
+  );
+
   return L.divIcon({
     className: "item-marker",
-    html: `<div style="background: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    html: `<div style="display: flex; align-items: center; justify-content: center;">
+      ${iconHTML}
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
   });
 };
 

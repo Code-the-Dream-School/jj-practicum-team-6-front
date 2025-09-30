@@ -70,16 +70,16 @@ const LandingMapSection = () => {
   }, []);
 
   return (
-    <section className="py-20 bg-white">
+    <section id="recently-added" className="py-20 bg-white">
       <div className="max-w-6xl mx-auto px-6">
         {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-20 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 text-center">
           {stats.map((stat, index) => (
             <div key={index} className="flex flex-col items-center">
-              <div className="font-display text-6xl md:text-7xl font-bold text-ink mb-3 leading-none">
+              <div className="font-display text-5xl md:text-6xl font-bold text-ink mb-2 leading-none">
                 {stat.number}
               </div>
-              <div className="font-body text-gray600 text-base font-normal">
+              <div className="font-body text-gray600 text-sm font-normal">
                 {stat.label}
               </div>
             </div>
@@ -87,13 +87,13 @@ const LandingMapSection = () => {
         </div>
 
         {/* Recently Added Section */}
-        <div className="text-center mb-12">
-          <h2 className="font-display text-5xl md:text-6xl font-bold text-ink mb-12 leading-tight">
+        <div className="text-center mb-8">
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-ink mb-8 leading-tight">
             Recently Added
           </h2>
 
           {/* View Toggle */}
-          <div className="flex justify-center gap-3 mb-12">
+          <div className="flex justify-center gap-3 mb-8">
             <button
               onClick={() => setViewMode("list")}
               className={`px-6 py-3 rounded-full flex items-center gap-3 font-medium text-sm transition-all duration-200 ${
@@ -178,13 +178,23 @@ const LandingMapSection = () => {
             ))}
           </div>
         )}
+
+        {/* View All Items Button with Access Control */}
         <div className="text-center mt-12">
           <button
-            onClick={() => navigate("/items/list")}
+            onClick={() => {
+              const token = localStorage.getItem("token");
+              if (token) {
+                navigate("/items/list");
+              } else {
+                navigate("/signin");
+              }
+            }}
             className="bg-ink text-white px-8 py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
           >
             View all items →
           </button>
+          {/* </div> */}
         </div>
       </div>
     </section>
