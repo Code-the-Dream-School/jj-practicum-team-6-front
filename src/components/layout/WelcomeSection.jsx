@@ -19,7 +19,7 @@ const AboutUsSection = () => {
             items in shared spaces like campuses, libraries, and cafés. Built
             through Code the Dream's Practicum, it connects communities through
             a centralized platform for posting, searching, and reuniting lost
-            belongings — featuring interactive maps and messaging. More than a
+            belongings with interactive maps and messaging features. More than a
             project, it reflects our growth as developers and our mission to
             build tools that bring people together.
           </p>

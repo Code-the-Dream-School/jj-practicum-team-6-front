@@ -21,7 +21,8 @@ const OurTeamSection = () => {
       name: "Chris Lee",
       role: "React/Node mentor",
       image: null,
-      linkedin: "https://linkedin.com/in/chris-lee",
+      linkedin: null, //"https://linkedin.com/in/chris-lee",
+      initals: "CL",
     },
     {
       name: "Aida Burlutckaia",
@@ -57,8 +58,9 @@ const OurTeamSection = () => {
     {
       name: "Masouma Ahmadi Jay",
       role: "Frontend Developer",
-      image: null,
-      linkedin: "https://linkedin.com/in/masouma-ahmadi-jay",
+      image:
+        "https://media.licdn.com/dms/image/v2/D4E03AQED0GDJbVex1g/profile-displayphoto-scale_200_200/B4EZmRvWbuKUAY-/0/1759086733538?e=1761782400&v=beta&t=TatrV50x3mrjCgEDfDJIqgzP0V6taTf6Hy4J3wiTQRo",
+      linkedin: "https://www.linkedin.com/in/masouma-ahmadi-780ab6241/",
     },
   ];
 
@@ -90,7 +92,8 @@ const OurTeamSection = () => {
             {teamMembers.map((member, index) => (
               <div
                 key={index}
-                className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow flex flex-col w-60 h-60"
+                className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm hover:shadow-md transition-shadow flex flex-col w-60"
+                style={{ minHeight: "280px" }}
               >
                 {/* Image placeholder */}
                 <div className="w-20 h-20 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
@@ -100,6 +103,10 @@ const OurTeamSection = () => {
                       alt={member.name}
                       className="w-full h-full object-cover rounded-lg"
                     />
+                  ) : member.initials ? (
+                    <div className="text-gray-600 text-2xl font-semibold">
+                      {member.initials}
+                    </div>
                   ) : (
                     <div className="text-gray-400 text-xl">👤</div>
                   )}
@@ -125,7 +132,7 @@ const OurTeamSection = () => {
                 </div>
 
                 {/* LinkedIn - at bottom */}
-                <div className="mt-auto">
+                <div className="mt-auto pt-4">
                   <button
                     onClick={() => handleLinkedInClick(member.linkedin)}
                     className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 transform hover:scale-110 ${

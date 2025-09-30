@@ -99,13 +99,10 @@ const Header = () => {
           onClick={(e) => {
             if (isLandingPage) {
               e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "smooth" });
+              window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
             }
           }}
           className="font-display text-3xl md:text-2xl font-bold text-ink cursor-pointer transition-colors hover:text-primary justify-self-start no-underline"
-          onClick={() =>
-            window.scrollTo({ top: 0, left: 0, behavior: "smooth" })
-          }
         >
           RetrieveApp
         </Link>

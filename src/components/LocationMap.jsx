@@ -45,29 +45,56 @@ L.Icon.Default.mergeOptions({
 //   });
 // };
 
+//////////////////bottom lines commented after rebase
+// const createItemIcon = (status) => {
+//   let color;
+//   if (status === "Resolved") {
+//     color = "#000000";
+//   } else if (status === "Lost") {
+//     color =
+//       getComputedStyle(document.documentElement).getPropertyValue(
+//         "--color-primary"
+//       ) || "#E66240";
+//   } else {
+//     color =
+//       getComputedStyle(document.documentElement).getPropertyValue(
+//         "--color-success"
+//       ) || "#7FD96C";
+//   }
+//   return L.divIcon({
+//     className: "item-marker",
+//     html: `<div style="display: flex; align-items: center; justify-content: center;">
+//       ${iconHTML}
+//     </div>`,
+//     iconSize: [32, 32],
+//     iconAnchor: [16, 32], // Anchor at bottom center of pin
+//     popupAnchor: [0, -32], // Popup appears above the pin
+//   });
+// };
+
 const createItemIcon = (status) => {
-  let color;
-  if (status === "Resolved") {
-    color = "#000000";
-  } else if (status === "Lost") {
-    color =
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--color-primary"
-      ) || "#E66240";
-  } else {
-    color =
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--color-success"
-      ) || "#7FD96C";
-  }
+  const color = status === "Lost" ? "#D30000" : "#228B22";
+  const glowColor = status === "Lost" ? "#FF6B6B" : "#4CAF50";
+
+  // Create the icon as a React component and render it to HTML string
+  const iconHTML = ReactDOMServer.renderToString(
+    <MdLocationPin
+      style={{
+        color: color,
+        fontSize: "32px",
+        filter: `drop-shadow(1px 1px 2px ${glowColor})`,
+      }}
+    />
+  );
+
   return L.divIcon({
     className: "item-marker",
     html: `<div style="display: flex; align-items: center; justify-content: center;">
       ${iconHTML}
     </div>`,
     iconSize: [32, 32],
-    iconAnchor: [16, 32], // Anchor at bottom center of pin
-    popupAnchor: [0, -32], // Popup appears above the pin
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
   });
 };
 

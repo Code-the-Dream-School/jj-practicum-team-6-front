@@ -178,32 +178,23 @@ const LandingMapSection = () => {
             ))}
           </div>
         )}
+
+        {/* View All Items Button with Access Control */}
         <div className="text-center mt-12">
-          <button
-            onClick={() => navigate("/items/list")}
-            className="bg-ink text-white px-8 py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
-          >
-            View all items →
-          </button>
-
-          {/* IS THIS OKAy?: View All item button to go to the List all items page process but not sure*/}
-
-          {/* <div className="text-center mt-12">
           <button
             onClick={() => {
               const token = localStorage.getItem("token");
               if (token) {
                 navigate("/items/list");
               } else {
-                // Optional: Show alert before redirecting
-                alert("Please sign in to view all items");
                 navigate("/signin");
               }
             }}
             className="bg-ink text-white px-8 py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
           >
             View all items →
-          </button> */}
+          </button>
+          {/* </div> */}
         </div>
       </div>
     </section>
