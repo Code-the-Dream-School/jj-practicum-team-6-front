@@ -29,7 +29,7 @@ const OurTeamSection = () => {
       role: "Full Stack Developer, Designer",
       subtitle: "Assistant mentor",
       image:
-        "https://media.licdn.com/dms/image/v2/D4E35AQFelFjMTwC-dA/profile-framedphoto-shrink_200_200/profile-framedphoto-shrink_200_200/0/1734444267715?e=1759644000&v=beta&t=6nwTxBUD2bF5osh7MDFiKEWsI8kDbZfRr0SAABXWzs8",
+        "https://media.licdn.com/dms/image/v2/C4D03AQHYl-0pJog9DA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1651656730043?e=1762992000&v=beta&t=CCyTqJzwpk76RvyNSPVAU8XFQmb0vrMhvLhQLMprGEw",
       linkedin: "https://www.linkedin.com/in/aida-burlutckaia-08832363/",
     },
     {
